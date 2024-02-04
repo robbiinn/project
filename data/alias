@@ -1,0 +1,9 @@
+init braba
+config ard foofooo foofooo foofooo foofooo foofooo foofooo foofooo
+add
+reset
+status
+commit
+log
+branch
+checkout

@@ -1,0 +1,9 @@
+init
+config
+add
+reset
+status
+commit
+log
+branch
+checkout
