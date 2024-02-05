@@ -946,7 +946,8 @@ int run_commit(int argc, char *const argv[]) {
                 break;
             }
         }
-        fclose(file);\
+        fclose(file);
+
     if (flag == 0) {
             printf("the shortcut doesnt exist\n");
             return 1;
@@ -955,6 +956,7 @@ int run_commit(int argc, char *const argv[]) {
     } else if ((strcmp(argv[2], "-m") == 0)) {
         strcpy(message, argv[3]);
     }
+    //
     char *commit_address = (char *) malloc(10000 * sizeof(char));
     strcpy(commit_address, ".neogit/branches/");
 
@@ -967,7 +969,7 @@ int run_commit(int argc, char *const argv[]) {
     strcat(commit_address, which_branch);
     char *branch_id_address = (char *) malloc(10000 * sizeof(char));
     strcpy(branch_id_address, commit_address);
-
+    //printf("%s\n" , commit_address); ta khode branch e jadid
     strcat(commit_address, "/commits/");
     fclose(file);
     file = fopen(".neogit/commits_id", "r");
@@ -1023,10 +1025,51 @@ int run_commit(int argc, char *const argv[]) {
         rename(".neogit/commits_addressandid2", ".neogit/commits_addressandid");
 
         strcat(branch_id_address, "/this_branch_id");
+
+        if (mkdir(commit_address, 0755) != 0) return 1;
+        //copy last commit
+        if (id > 1) {
+            char *old_commit_address = (char *) malloc(10000 * sizeof(char));
+
+            strcpy(old_commit_address, ".neogit/branches/");
+            strcat(old_commit_address, which_branch);
+            strcat(old_commit_address, "/commits/");
+            file = fopen(branch_id_address, "r");
+            if (file == NULL)
+                return 1;
+            char * last_com_id = (char *) malloc(10000 * sizeof(char));
+            fgets(last_com_id , 10000 , file);
+            if (last_com_id[strlen(last_com_id) - 1] == '\n')
+                last_com_id[strlen(last_com_id) - 1] = '\0';
+            char * toke = strtok(last_com_id , " ");
+            strcat(old_commit_address, toke);
+            fclose(file);
+
+//            char *idstring = (char *) malloc(10000 * sizeof(char));
+//            sprintf(idstring, "%d", id - 1);
+//            strcat(old_commit_address, str_id);
+            dir = opendir(old_commit_address);
+            if (dir == NULL) {
+                return 1;
+            }
+            while ((entry = readdir(dir)) != NULL) {
+                if (entry->d_name[0] != '.') {
+                    char * i_dont_know = (char *) malloc(10000 * sizeof(char));
+                    strcpy(i_dont_know , old_commit_address);
+                    strcat(i_dont_know , "/");
+                    strcat(i_dont_know , entry->d_name);
+                    char command[10000] = "";
+                    sprintf(command, "rsync -r %s %s", i_dont_know, commit_address);
+                    system(command);
+                }
+            }
+            closedir(dir);
+        }
+
+
         file = fopen(branch_id_address, "r");
         if (file == NULL)
             return 1;
-
         char *branch_id_address2 = (char *) malloc(100 * sizeof(char));
         strcpy(branch_id_address2, branch_id_address);
         strcat(branch_id_address2, "2");
@@ -1034,6 +1077,7 @@ int run_commit(int argc, char *const argv[]) {
         file2 = fopen(branch_id_address2, "w");
         fprintf(file2, "%s ", str_id);
         fprintf(file2, "%s\n", commit_address);
+        //printf("commit add = %s\n" , commit_address);
 
         char *id_branch = (char *) malloc(100 * sizeof(char));
         while (fgets(id_branch, 100, file) != NULL) {
@@ -1046,26 +1090,7 @@ int run_commit(int argc, char *const argv[]) {
         fclose(file2);
         rename(branch_id_address2, branch_id_address);
 
-        if (mkdir(commit_address, 0755) != 0) return 1;
-        if (id > 1) {
-            char *old_commit_address = (char *) malloc(10000 * sizeof(char));
-            strcpy(old_commit_address, ".neogit/branches/master/commits/");
-            char *idstring = (char *) malloc(10000 * sizeof(char));
-            sprintf(idstring, "%d", id - 1);
-            strcat(old_commit_address, str_id);
-            dir = opendir(old_commit_address);
-            if (dir == NULL) {
-                return 1;
-            }
-            while ((entry = readdir(dir)) != NULL) {
-                if (entry->d_name[0] != '.') {
-                    char command[10000] = "";
-                    sprintf(command, "rsync -r %s %s", old_commit_address, commit_address);
-                    system(command);
-                }
-            }
-            closedir(dir);
-        }
+
         file = fopen(".neogit/commits_id", "w");
         fprintf(file, "%d\n", id + 1);///////////////////////id++?
         fclose(file);
@@ -1129,6 +1154,10 @@ int run_commit(int argc, char *const argv[]) {
         }
         fclose(file2);
         rename(".neogit/commit_info2", ".neogit/commit_info");
+        printf("%d " , id );
+        printf("%d-%02d-%02d %02d:%02d:%02d ", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour,
+               tm.tm_min, tm.tm_sec);
+        printf("%s\n" , message);
         return 0;
     }
 }
@@ -1619,6 +1648,20 @@ int run_checkout(int argc, char *const argv[]) {
                 }
 
                 //move to the new branch
+                //remove files and directories
+                dir = opendir(".");
+                if (dir == NULL) {
+                    perror("Error opening current directory");
+                    return 1;
+                }
+                while ((entry = readdir(dir)) != NULL) {
+                    if (entry->d_name[0] != '.') {
+                        char command[100];
+                        sprintf(command , "rm -r %s" , entry->d_name);
+                        system(command);
+                    }
+                }
+                closedir(dir);
 
                 //new branch address
                 char *new_branch_to_id = (char *) malloc(10000 * sizeof(char));
@@ -1703,7 +1746,7 @@ int run_checkout(int argc, char *const argv[]) {
                 char *last_branch_to_id = (char *) malloc(10000 * sizeof(char));
                 strcpy(last_branch_to_id, ".neogit/branches/");
                 strcat(last_branch_to_id, last_branch);
-                strcpy(last_branch_to_id, "/this_branch_id");
+                strcat(last_branch_to_id, "/this_branch_id");
                 char *last_commit = (char *) malloc(10000 * sizeof(char));
                 file = fopen(last_branch_to_id, "r");/////////////////////close
                 fgets(last_commit, 10000, file);
@@ -1729,15 +1772,16 @@ int run_checkout(int argc, char *const argv[]) {
                 }
 
                 struct dirent *entry_commit;
-                DIR *dir_commit = opendir(last_commit_address);
-                if (dir_commit == NULL) {
-                    perror("Error opening current directory");
-                    return 1;
-                }
+                DIR *dir_commit;
 
                 while ((entry = readdir(dir)) != NULL) {
                     if (entry->d_name[0] != '.') {
                         counter++;
+                        dir_commit = opendir(last_commit_address);
+                        if (dir_commit == NULL) {
+                            perror("Error opening current directory");
+                            return 1;
+                        }
                         while ((entry_commit = readdir(dir_commit)) != NULL) {
                             if (entry_commit->d_name[0] != '.') {
                                 counter3++;
@@ -1746,10 +1790,11 @@ int run_checkout(int argc, char *const argv[]) {
                                 }
                             }
                         }
+                        closedir(dir_commit);
                     }
                 }
                 closedir(dir);
-                closedir(dir_commit);
+
 
                 //check
                 if (counter != counter2) {
