@@ -1726,7 +1726,7 @@ int run_checkout(int argc, char *const argv[]) {
                 {
                     file = fopen(".neogit/branch_name" , "w");
                     fprintf(file , "%s\n" , which_branch);
-                    close(file);
+                    fclose(file);
                 }
 
                 return 0;
