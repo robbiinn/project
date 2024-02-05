@@ -43,6 +43,12 @@ int run_checkout(int argc, char *const argv[]);
 
 int run_status(int argc, char *const argv[]);
 
+int run_set(int argc, char *const argv[]);
+
+int run_replace(int argc, char *const argv[]);
+
+int run_remove(int argc, char *const argv[]);
+
 void copy_dir(char *address, char *full_address);
 
 int check_time(char *time, char *committed_time);
@@ -222,6 +228,8 @@ int create_configs(char *username, char *email) {
 
     file = fopen(".neogit/commits_id", "w");
     fprintf(file, "%s\n", "1");
+    fclose(file);
+    file = fopen(".neogit/commits_shortcut", "w");
     fclose(file);
     file = fopen(".neogit/commits_addressandid", "w");
     fclose(file);
@@ -900,15 +908,46 @@ int run_commit(int argc, char *const argv[]) {
         printf("please put your commit message between \"\"\n");
         return 1;
     }
-    if (strcmp(argv[2], "-m") != 0) {
+    if ((strcmp(argv[2], "-m") != 0) || (strcmp(argv[2], "-s") != 0)) {
         printf("invalid command\n");
         return 1;
     }
-    if (strlen(argv[3]) > 72) {
-        printf("your commit message has too many characters\n");
-        return 1;
+    if ((strcmp(argv[2], "-m") == 0)) {
+        if (strlen(argv[3]) > 72) {
+            printf("your commit message has too many characters\n");
+            return 1;
+        }
     }
+    char * message = (char *) malloc(10000 * sizeof(char));
+    if ((strcmp(argv[2], "-s") == 0)) {
 
+        //open shortcut file
+        FILE *file = fopen(".neogit/commit_shortcut", "r");
+
+        //find shortcut
+        int flag = 0;
+        char *shortcut = (char *) malloc(10000 * sizeof(char));
+        while (fgets(shortcut, 10000, file) != NULL) {
+            if (shortcut[strlen(shortcut) - 1] == '\n')
+                shortcut[strlen(shortcut) - 1] = '\0';
+            if (strcmp(shortcut, argv[3]) == 0) {
+                fgets(shortcut, 10000, file);
+                if (shortcut[strlen(shortcut) - 1] == '\n')
+                    shortcut[strlen(shortcut) - 1] = '\0';
+                flag = 1;
+                break;
+            }
+        }
+        fclose(file);\
+    if (flag == 0) {
+            printf("the shortcut doesnt exist\n");
+            return 1;
+        }
+        strcpy(message , shortcut);
+    }
+    else if ((strcmp(argv[2], "-m") == 0)) {
+        strcpy(message , argv[3]);
+    }
     char *commit_address = (char *) malloc(10000 * sizeof(char));
     strcpy(commit_address, ".neogit/branches/");
 
@@ -1053,7 +1092,7 @@ int run_commit(int argc, char *const argv[]) {
         if (branch[strlen(branch) - 1] == '\n')
             branch[strlen(branch) - 1] = '\0';
         fclose(br);
-        fprintf(file2, "%s %d %s %d $%s\n", argv[3], id, branch, n_file, user_name);/////????????????????
+        fprintf(file2, "%s %d %s %d $%s\n", message, id, branch, n_file, user_name);/////????????????????
         if (id > 1) {
             while (fgets(file_content, 10000, file) != NULL) {
                 //printf("%s\n", file_content);
@@ -1369,7 +1408,7 @@ int run_checkout(int argc, char *const argv[]) {
             //if repository and last commit are same
 
             //the last branch
-            FILE * file = fopen(".neogit/branch_name", "r");
+            FILE *file = fopen(".neogit/branch_name", "r");
             if (file == NULL)
                 return 1;
             char *last_branch = (char *) malloc(10000 * sizeof(char));
@@ -1417,7 +1456,7 @@ int run_checkout(int argc, char *const argv[]) {
             while ((entry = readdir(dir)) != NULL) {
                 if (entry->d_name[0] != '.') {
                     counter++;
-                    while ((entry_commit = readdir(dir)) != NULL) {
+                    while ((entry_commit = readdir(dir_commit)) != NULL) {
                         if (entry_commit->d_name[0] != '.') {
                             counter3++;
                             if (strcmp(entry_commit->d_name, entry->d_name) == 0) {
@@ -1439,7 +1478,6 @@ int run_checkout(int argc, char *const argv[]) {
                 printf("files in repository has not been commited yet\n");
                 return 1;
             }
-
 
 
             return 0;
@@ -1531,7 +1569,7 @@ int run_checkout(int argc, char *const argv[]) {
                 while ((entry = readdir(dir)) != NULL) {
                     if (entry->d_name[0] != '.') {
                         counter++;
-                        while ((entry_commit = readdir(dir)) != NULL) {
+                        while ((entry_commit = readdir(dir_commit)) != NULL) {
                             if (entry_commit->d_name[0] != '.') {
                                 counter3++;
                                 if (strcmp(entry_commit->d_name, entry->d_name) == 0) {
@@ -1594,14 +1632,12 @@ int run_checkout(int argc, char *const argv[]) {
                 closedir(dir);
 
                 return 0;
-            }
-            else
-            {
+            } else {
                 //if id is valid ??????
                 int id;
                 id = atoi(sth);
-                char * last_id1 = (char *) malloc(100 * sizeof(char));
-                FILE * file = fopen(".neogit/commits_addressandid" , "r");
+                char *last_id1 = (char *) malloc(100 * sizeof(char));
+                FILE *file = fopen(".neogit/commits_addressandid", "r");
                 char *last_commit1 = (char *) malloc(10000 * sizeof(char));
                 fgets(last_commit1, 10000, file);
                 if (last_commit1[strlen(last_commit1) - 1] == '\n')
@@ -1613,11 +1649,10 @@ int run_checkout(int argc, char *const argv[]) {
                 tok = strtok(NULL, " ");
                 strcpy(last_address, tok);
                 int id_last = atoi(last_id1);
-                id_last--;
-                if(id > id_last)
-                {
+                //id_last--;
+                if (id > id_last) {
                     printf("invalid id\n");
-                    return  1;
+                    return 1;
                 }
                 fclose(file);
 
@@ -1672,7 +1707,7 @@ int run_checkout(int argc, char *const argv[]) {
                 while ((entry = readdir(dir)) != NULL) {
                     if (entry->d_name[0] != '.') {
                         counter++;
-                        while ((entry_commit = readdir(dir)) != NULL) {
+                        while ((entry_commit = readdir(dir_commit)) != NULL) {
                             if (entry_commit->d_name[0] != '.') {
                                 counter3++;
                                 if (strcmp(entry_commit->d_name, entry->d_name) == 0) {
@@ -1717,15 +1752,13 @@ int run_checkout(int argc, char *const argv[]) {
                 closedir(dir);
 
                 //change branch?????????????
-                char * which_branch = strtok(last_address , "/");
-                for(int i = 0 ; i < 2 ; i++)
-                {
-                    which_branch = strtok(NULL , "/");
+                char *which_branch = strtok(last_address, "/");
+                for (int i = 0; i < 2; i++) {
+                    which_branch = strtok(NULL, "/");
                 }
-                if(strcmp(which_branch , last_branch) != 0)
-                {
-                    file = fopen(".neogit/branch_name" , "w");
-                    fprintf(file , "%s\n" , which_branch);
+                if (strcmp(which_branch, last_branch) != 0) {
+                    file = fopen(".neogit/branch_name", "w");
+                    fprintf(file, "%s\n", which_branch);
                     fclose(file);
                 }
 
@@ -1740,6 +1773,318 @@ int run_checkout(int argc, char *const argv[]) {
         return 1;
     }
 }
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+int run_status(int argc, char *const argv[]) {
+    if (argc > 2) {
+        printf("invalid commann\n");
+        return 1;
+    } else {
+        //find last commit
+        char *last_id = (char *) malloc(100 * sizeof(char));
+        FILE *file = fopen(".neogit/commits_addressandid", "r");
+        char *last_commit = (char *) malloc(10000 * sizeof(char));
+        fgets(last_commit, 10000, file);
+        if (last_commit[strlen(last_commit) - 1] == '\n')
+            last_commit[strlen(last_commit) - 1] = '\0';
+        //char *last_id_nbranch = (char *) malloc(10000 * sizeof(char));
+        char *tok = strtok(last_commit, " ");
+        strcpy(last_id, tok);///????????????????????????????????????????
+        char *last_address = (char *) malloc(10000 * sizeof(char));
+        tok = strtok(NULL, " ");
+        strcpy(last_address, tok);
+        fclose(file);
+
+        //open it
+        int counter = 0;
+        int counter2 = 0;
+        int counter3 = 0;
+        int flag = -1;
+        int flag2 = -1;
+        int flag3 = -1;
+        struct dirent *entry;
+        DIR *dir = opendir(".");
+        if (dir == NULL) {
+            perror("Error opening current directory");
+            return 1;
+        }
+
+        struct dirent *entry_commit;
+        DIR *dir_commit = opendir(last_address);
+        if (dir_commit == NULL) {
+            perror("Error opening current directory");
+            return 1;
+        }
+
+        struct dirent *entry_stage;
+        DIR *dir_stage = opendir(".neogit/staging");
+        if (dir_stage == NULL) {
+            perror("Error opening current directory");
+            return 1;
+        }
+        FILE *file2;
+        char *file_address = (char *) malloc(10000 * sizeof(char));
+        char *repo_file_content = (char *) malloc(10000 * sizeof(char));
+        char *commit_file_content = (char *) malloc(10000 * sizeof(char));
+        while ((entry = readdir(dir)) != NULL) {
+            if (entry->d_name[0] != '.' && entry->d_type == DT_REG) {
+                flag = 0;
+                flag2 = 0;
+                while ((entry_stage = readdir(dir_stage)) != NULL) {
+                    if (entry_stage->d_name[0] != '.' && entry_stage->d_type == DT_REG) {
+                        if (strcmp(entry_stage->d_name, entry->d_name) == 0) {
+                            flag = 1;
+                            // printf("%c", '+');
+                        }
+                    }
+                }
+                closedir(dir_stage);
+//                if (flag == 0)
+//                    printf("%c", '-');
+                while ((entry_commit = readdir(dir_commit)) != NULL) {
+                    if (entry_commit->d_name[0] != '.' && entry_commit->d_type == DT_REG) {
+                        if (strcmp(entry_commit->d_name, entry->d_name) == 0) {
+                            flag2 = 1;
+                            file = fopen(entry->d_name, "r");//close
+                            if (file == NULL) return 1;
+                            strcpy(file_address, last_address);
+                            strcat(file_address, "/");
+                            strcat(file_address, entry_commit->d_name);
+                            file2 = fopen(file_address, "r");//close
+                            if (file2 == NULL) return 1;
+                            fscanf(file, "%[^\0s]", repo_file_content);
+                            fscanf(file2, "%[^\0s]", commit_file_content);
+                            fclose(file);
+                            fclose(file2);
+//                            fgets(repo_file_content, 10000, file);
+//                            if (repo_file_content[strlen(repo_file_content) - 1] == '\n')
+//                                repo_file_content[strlen(repo_file_content) - 1] = '\0';
+//                            fgets(commit_file_content, 10000, file2);
+//                            if (commit_file_content[strlen(commit_file_content) - 1] == '\n')
+//                                commit_file_content[strlen(commit_file_content) - 1] = '\0';
+                            if (strcmp(commit_file_content, repo_file_content) != 0) {
+                                if (flag == 1)
+                                    printf("%s %c%c\n", entry->d_name, '+', 'M');
+                                else
+                                    printf("%s %c%c\n", entry->d_name, '-', 'M');
+                                break;
+                            }
+                        }
+                    }
+
+                }
+                if (flag2 == 0) {
+                    if (flag == 1)
+                        printf("%s %c%c\n", entry->d_name, '+', 'A');
+                    else
+                        printf("%s %c%c\n", entry->d_name, '-', 'A');
+                }
+            }
+            closedir(dir);
+            closedir(dir_commit);
+        }
+
+        //if removed
+        dir = opendir(".");
+        if (dir == NULL) {
+            perror("Error opening current directory");
+            return 1;
+        }
+
+        dir_commit = opendir(last_address);
+        if (dir_commit == NULL) {
+            perror("Error opening current directory");
+            return 1;
+        }
+
+        dir_stage = opendir(".neogit/staging");
+        if (dir_stage == NULL) {
+            perror("Error opening current directory");
+            return 1;
+        }
+
+        flag = 0;
+        flag2 = 0;
+        while ((entry_commit = readdir(dir_commit)) != NULL) {
+            if (entry_commit->d_name[0] != '.' && entry_commit->d_type == DT_REG) {
+                flag = 0;
+                flag2 = 0;
+                while ((entry = readdir(dir)) != NULL) {
+                    if (entry->d_name[0] != '.' && entry->d_type == DT_REG) {
+                        if (strcmp(entry->d_name, entry_commit->d_name) == 0) {
+                            flag = 1;
+                        }
+                    }
+                }
+                while ((entry_stage = readdir(dir_stage)) != NULL) {
+                    if (entry_stage->d_name[0] != '.' && entry_stage->d_type == DT_REG) {
+                        if (strcmp(entry_stage->d_name, entry->d_name) == 0) {
+                            flag2 = 1;
+                            if (flag == 0)
+                                printf("%s %c%c\n", entry_commit->d_name, '+', 'D');
+                            break;
+                        }
+                    }
+                }
+                if (flag2 == 0 && flag == 0) {
+                    printf("%s %c%c\n", entry_commit->d_name, '-', 'D');
+                }
+                closedir(dir);
+                closedir(dir_commit);
+            }
+        }
+    }
+    return 0;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+int run_set(int argc, char *const argv[]) {
+    if (argc != 6) {////??
+        printf("invalid command\n");
+        return 1;
+    }
+    if ((strcmp(argv[2], "-m") != 0) || (strcmp(argv[4], "-s") != 0)) {
+        printf("invalid command\n");
+        return 1;
+    }
+    if (strlen(argv[3]) > 72) {
+        printf("your commit message has too many characters\n");
+        return 1;
+    }
+    //open shortcut file
+    FILE *file = fopen(".neogit/commit_shortcut", "a");
+
+    //write and shortcut
+    fprintf(file, "%s\n", argv[5]);
+    fprintf(file, "%s\n", argv[3]);
+    fclose(file);
+    return 0;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+int run_replace(int argc, char *const argv[]) {
+    if (argc != 6) {////??
+        printf("invalid command\n");
+        return 1;
+    }
+    if ((strcmp(argv[2], "-m") != 0) || (strcmp(argv[4], "-s") != 0)) {
+        printf("invalid command\n");
+        return 1;
+    }
+
+    //open shortcut file
+    FILE *file = fopen(".neogit/commit_shortcut", "r");
+
+    //find shortcut
+    int counter = 0;
+    int counter2 = -1;
+    char *shortcut = (char *) malloc(10000 * sizeof(char));
+    while (fgets(shortcut, 10000, file) != NULL) {
+        if (shortcut[strlen(shortcut) - 1] == '\n')
+            shortcut[strlen(shortcut) - 1] = '\0';
+        counter++;
+        if (strcmp(shortcut, argv[5]) == 0) {
+            counter2 = counter + 1;
+            break;
+        }
+    }
+    fclose(file);\
+    if (counter2 == -1) {
+        printf("the shortcut doesnt exist\n");
+        return 1;
+    }
+    //replace
+    file = fopen(".neogit/commit_shortcut", "r");
+    FILE *file2 = fopen(".neogit/commit_shortcut2", "w");
+    char *new_shortcut_message = (char *) malloc(10000 * sizeof(char));
+    strcpy(new_shortcut_message, argv[3]);
+    for (int i = 0; i < counter2 - 1; i++) {
+        fgets(shortcut, 10000, file);
+        if (shortcut[strlen(shortcut) - 1] == '\n')
+            shortcut[strlen(shortcut) - 1] = '\0';
+        fprintf(file2, "%s\n", shortcut);
+    }
+    fprintf(file2, "%s\n", new_shortcut_message);
+    fgets(shortcut, 10000, file);
+    if (shortcut[strlen(shortcut) - 1] == '\n')
+        shortcut[strlen(shortcut) - 1] = '\0';
+    for (int i = counter2; i < counter - 1; i++) {
+        fgets(shortcut, 10000, file);
+        if (shortcut[strlen(shortcut) - 1] == '\n')
+            shortcut[strlen(shortcut) - 1] = '\0';
+        fprintf(file2, "%s\n", shortcut);
+    }
+    fclose(file);
+    remove(".neogit/commit_shortcut");
+    fclose(file2);
+    rename(".neogit/commit_shortcut2", ".neogit/commit_shortcut");
+    return 0;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+int run_remove(int argc, char *const argv[]) {
+    if (argc != 4) {
+        printf("invalid command\n");
+        return 1;
+    }
+    if (strcmp(argv[2], "-m") != 0) {
+        printf("invalid command\n");
+        return 1;
+    }
+    //open shortcut file
+    FILE *file = fopen(".neogit/commit_shortcut", "r");
+
+    //find shortcut
+    int counter = 0;
+    int counter2 = -1;
+    char *shortcut = (char *) malloc(10000 * sizeof(char));
+    while (fgets(shortcut, 10000, file) != NULL) {
+        if (shortcut[strlen(shortcut) - 1] == '\n')
+            shortcut[strlen(shortcut) - 1] = '\0';
+        counter++;
+        if (strcmp(shortcut, argv[5]) == 0) {
+            counter2 = counter;
+            break;
+        }
+    }
+    fclose(file);
+    if (counter2 == -1) {
+        printf("the shortcut doesnt exist\n");
+        return 1;
+    }
+
+    //remove
+    file = fopen(".neogit/commit_shortcut", "r");
+    FILE *file2 = fopen(".neogit/commit_shortcut2", "w");
+    for (int i = 0; i < counter2 - 1; i++) {
+        fgets(shortcut, 10000, file);
+        if (shortcut[strlen(shortcut) - 1] == '\n')
+            shortcut[strlen(shortcut) - 1] = '\0';
+        fprintf(file2, "%s\n", shortcut);
+    }
+    fgets(shortcut, 10000, file);
+    if (shortcut[strlen(shortcut) - 1] == '\n')
+        shortcut[strlen(shortcut) - 1] = '\0';
+    fgets(shortcut, 10000, file);
+    if (shortcut[strlen(shortcut) - 1] == '\n')
+        shortcut[strlen(shortcut) - 1] = '\0';
+    for (int i = counter2 + 1; i < counter - 1; i++) {
+        fgets(shortcut, 10000, file);
+        if (shortcut[strlen(shortcut) - 1] == '\n')
+            shortcut[strlen(shortcut) - 1] = '\0';
+        fprintf(file2, "%s\n", shortcut);
+    }
+    fclose(file);
+    remove(".neogit/commit_shortcut");
+    fclose(file2);
+    rename(".neogit/commit_shortcut2", ".neogit/commit_shortcut");
+    return 0;
+}
+
 
 /////////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char *argv[]) {
@@ -1766,14 +2111,19 @@ int main(int argc, char *argv[]) {
         return run_log(argc, argv);
     } else if ((strcmp(argv[1], "branch") == 0) || (strcmp(true_command(argv[1]), "branch") == 0)) {
         return run_branch(argc, argv);
-    } else if (strcmp(argv[1], "checkout") == 0) {
+    } else if ((strcmp(argv[1], "checkout") == 0) || (strcmp(true_command(argv[1]), "checkout") == 0)) {
         return run_checkout(argc, argv);
-    }else if (strcmp(argv[1], "status") == 0) {
+    } else if ((strcmp(argv[1], "status") == 0) || (strcmp(true_command(argv[1]), "status") == 0)) {
         return run_status(argc, argv);
+    } else if ((strcmp(argv[1], "set") == 0) || (strcmp(true_command(argv[1]), "set") == 0)) {
+        return run_set(argc, argv);
+    } else if ((strcmp(argv[1], "replace") == 0) || (strcmp(true_command(argv[1]), "replace") == 0)) {
+        return run_replace(argc, argv);
+    } else if ((strcmp(argv[1], "remove") == 0) || (strcmp(true_command(argv[1]), "remove") == 0)) {
+        return run_remove(argc, argv);
+    } else {
+        printf("invalid command\n");
     }
-       else {
-            printf("invalid command\n");
-        }
 
     return 0;
 }
