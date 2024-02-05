@@ -226,6 +226,10 @@ int create_configs(char *username, char *email) {
     fclose(file);
     if (mkdir(".neogit/branches/master/commits", 0755) != 0) return 1;
 
+    file = fopen(".neogit/current_commit_id", "w");
+    fprintf(file, "%s\n", "0");
+    fclose(file);
+
     file = fopen(".neogit/commits_id", "w");
     fprintf(file, "%s\n", "1");
     fclose(file);
@@ -1091,6 +1095,11 @@ int run_commit(int argc, char *const argv[]) {
         rename(branch_id_address2, branch_id_address);
 
 
+        file = fopen(".neogit/current_commit_id", "w");
+        fprintf(file, "%d %s\n", id + 1 , commit_address);///////////////////////id++?
+        fclose(file);
+
+
         file = fopen(".neogit/commits_id", "w");
         fprintf(file, "%d\n", id + 1);///////////////////////id++?
         fclose(file);
@@ -1603,6 +1612,11 @@ int run_checkout(int argc, char *const argv[]) {
                 strcpy(last_commit_address, token);
                 fclose(file);
 
+                //current id
+                file = fopen(".neogit/commits_id", "w");
+                fprintf(file, "%s %s\n", last_id , last_commit_address);///////////////////////id++?
+                fclose(file);
+
                 //compare
                 int counter = 0;
                 int counter2 = 0;
@@ -1801,31 +1815,31 @@ int run_checkout(int argc, char *const argv[]) {
                     printf("files in repository has not been commited yet\n");
                     return 1;
                 }
-                if (counter3 != counter2 * counter2) {
-                    printf("files in repository has not been commited yet\n");
-                    return 1;
-                }
+//                if (counter3 != counter2 * counter2) {
+//                    printf("files in repository has not been commited yet\n");
+//                    return 1;
+//                }
 
                 //copy
 
                 //go to new commit
-                char *new_rep_file = (char *) malloc(10000 * sizeof(char));
-                dir = opendir(last_address);
-                if (dir == NULL) {
-                    perror("Error opening current directory");
-                    return 1;
-                }
-                while ((entry = readdir(dir)) != NULL) {
-                    if (entry->d_name[0] != '.') {
-                        strcpy(new_rep_file, last_address);
-                        strcat(new_rep_file, "/");
-                        strcat(new_rep_file, entry->d_name);
-                        char command[10000] = "";
-                        sprintf(command, "rsync -r %s %s", new_rep_file, ".");
-                        system(command);
-                    }
-                }
-                closedir(dir);
+//                char *new_rep_file = (char *) malloc(10000 * sizeof(char));
+//                dir = opendir(last_address);
+//                if (dir == NULL) {
+//                    perror("Error opening current directory");
+//                    return 1;
+//                }
+//                while ((entry = readdir(dir)) != NULL) {
+//                    if (entry->d_name[0] != '.') {
+//                        strcpy(new_rep_file, last_address);
+//                        strcat(new_rep_file, "/");
+//                        strcat(new_rep_file, entry->d_name);
+//                        char command[10000] = "";
+//                        sprintf(command, "rsync -r %s %s", new_rep_file, ".");
+//                        system(command);
+//                    }
+//                }
+//                closedir(dir);
 
                 //change branch?????????????
                 char *which_branch = strtok(last_address, "/");
