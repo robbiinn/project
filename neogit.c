@@ -229,7 +229,7 @@ int create_configs(char *username, char *email) {
     file = fopen(".neogit/commits_id", "w");
     fprintf(file, "%s\n", "1");
     fclose(file);
-    file = fopen(".neogit/commits_shortcut", "w");
+    file = fopen(".neogit/commit_shortcut", "w");
     fclose(file);
     file = fopen(".neogit/commits_addressandid", "w");
     fclose(file);
@@ -269,6 +269,10 @@ int creat_alias() {
     fprintf(file, "log\n");
     fprintf(file, "branch\n");
     fprintf(file, "checkout\n");
+    fprintf(file, "set\n");
+    fprintf(file, "replace\n");
+    fprintf(file, "remove\n");
+    fprintf(file, "set\n");
     fclose(file);
 }
 
@@ -672,7 +676,10 @@ int run_add(int argc, char *const argv[]) {
             FILE *file = fopen(tmp_cwd, "r");
             flag = 1;
             if (file == NULL) {
-                printf("file or directory num %d doesn't exist\n", i - 2);
+                if ((strcmp(argv[2], "-f") == 0))
+                    printf("file or directory num %d doesn't exist\n", i - 2);
+                else
+                    printf("file or directory num %d doesn't exist\n", i - 1);
                 continue;
             }
             fclose(file);
@@ -908,7 +915,7 @@ int run_commit(int argc, char *const argv[]) {
         printf("please put your commit message between \"\"\n");
         return 1;
     }
-    if ((strcmp(argv[2], "-m") != 0) || (strcmp(argv[2], "-s") != 0)) {
+    if ((strcmp(argv[2], "-m") != 0) && (strcmp(argv[2], "-s") != 0)) {
         printf("invalid command\n");
         return 1;
     }
@@ -918,7 +925,7 @@ int run_commit(int argc, char *const argv[]) {
             return 1;
         }
     }
-    char * message = (char *) malloc(10000 * sizeof(char));
+    char *message = (char *) malloc(10000 * sizeof(char));
     if ((strcmp(argv[2], "-s") == 0)) {
 
         //open shortcut file
@@ -943,10 +950,9 @@ int run_commit(int argc, char *const argv[]) {
             printf("the shortcut doesnt exist\n");
             return 1;
         }
-        strcpy(message , shortcut);
-    }
-    else if ((strcmp(argv[2], "-m") == 0)) {
-        strcpy(message , argv[3]);
+        strcpy(message, shortcut);
+    } else if ((strcmp(argv[2], "-m") == 0)) {
+        strcpy(message, argv[3]);
     }
     char *commit_address = (char *) malloc(10000 * sizeof(char));
     strcpy(commit_address, ".neogit/branches/");
@@ -1092,7 +1098,7 @@ int run_commit(int argc, char *const argv[]) {
         if (branch[strlen(branch) - 1] == '\n')
             branch[strlen(branch) - 1] = '\0';
         fclose(br);
-        fprintf(file2, "%s %d %s %d $%s\n", message, id, branch, n_file, user_name);/////????????????????
+        fprintf(file2, "%s %d %s %d $%s\n", , id, branch, n_file, user_name , message);/////????????????????
         if (id > 1) {
             while (fgets(file_content, 10000, file) != NULL) {
                 //printf("%s\n", file_content);
@@ -1774,7 +1780,7 @@ int run_checkout(int argc, char *const argv[]) {
     }
 }
 
-/////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////
 
 int run_status(int argc, char *const argv[]) {
     if (argc > 2) {
@@ -1941,7 +1947,7 @@ int run_status(int argc, char *const argv[]) {
 /////////////////////////////////////////////////////////////////////////////////////
 
 int run_set(int argc, char *const argv[]) {
-    if (argc != 6) {////??
+    if (argc != 6) {
         printf("invalid command\n");
         return 1;
     }
@@ -2031,7 +2037,7 @@ int run_remove(int argc, char *const argv[]) {
         printf("invalid command\n");
         return 1;
     }
-    if (strcmp(argv[2], "-m") != 0) {
+    if (strcmp(argv[2], "-s") != 0) {
         printf("invalid command\n");
         return 1;
     }
@@ -2046,7 +2052,7 @@ int run_remove(int argc, char *const argv[]) {
         if (shortcut[strlen(shortcut) - 1] == '\n')
             shortcut[strlen(shortcut) - 1] = '\0';
         counter++;
-        if (strcmp(shortcut, argv[5]) == 0) {
+        if (strcmp(shortcut, argv[3]) == 0) {
             counter2 = counter;
             break;
         }
@@ -2087,26 +2093,28 @@ int run_remove(int argc, char *const argv[]) {
 
 
 /////////////////////////////////////////////////////////////////////////////////////
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[]){
 
     if (argc < 2) {
         fprintf(stdout, "please enter a valid command\n");
         return 1;
-    }
+    }//printf("1\n");
     if (strcmp(argv[1], "init") == 0) {
         return run_init(argc, argv);
     }
+
+
     if (strcmp(true_command(argv[1]), "init") == 0) {
         return run_init(argc, argv);
     }
     if ((strcmp(true_command(argv[1]), "config") == 0) || (strcmp(argv[1], "config") == 0)) {
-        return run_config(argc, argv);
+        return run_config(argc, argv);printf("1\n");
     } else if ((strcmp(argv[1], "add") == 0) || (strcmp(true_command(argv[1]), "add") == 0)) {
-        return run_add(argc, argv);
+        return run_add(argc, argv);printf("1\n");
     } else if ((strcmp(argv[1], "reset") == 0) || (strcmp(true_command(argv[1]), "reset") == 0)) {
-        return run_reset(argc, argv);
+        return run_reset(argc, argv);printf("1\n");
     } else if ((strcmp(argv[1], "commit") == 0) || (strcmp(true_command(argv[1]), "commit") == 0)) {
-        return run_commit(argc, argv);
+        return run_commit(argc, argv);printf("1\n");
     } else if ((strcmp(argv[1], "log") == 0) || (strcmp(true_command(argv[1]), "log") == 0)) {
         return run_log(argc, argv);
     } else if ((strcmp(argv[1], "branch") == 0) || (strcmp(true_command(argv[1]), "branch") == 0)) {
@@ -2115,7 +2123,7 @@ int main(int argc, char *argv[]) {
         return run_checkout(argc, argv);
     } else if ((strcmp(argv[1], "status") == 0) || (strcmp(true_command(argv[1]), "status") == 0)) {
         return run_status(argc, argv);
-    } else if ((strcmp(argv[1], "set") == 0) || (strcmp(true_command(argv[1]), "set") == 0)) {
+    } else if ((strcmp(argv[1], "set")== 0) || (strcmp(true_command(argv[1]), "set") == 0)) {
         return run_set(argc, argv);
     } else if ((strcmp(argv[1], "replace") == 0) || (strcmp(true_command(argv[1]), "replace") == 0)) {
         return run_replace(argc, argv);
