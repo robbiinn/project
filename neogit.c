@@ -28,6 +28,14 @@ int creat_alias();
 
 int check_alias(char *command);
 
+long long get_size(char *file_name);
+
+int todo_check(char *file_name);
+
+int format_check(char *file_name);
+
+int character_limit(char *file_name);
+
 const char *true_command(char *command);
 
 int run_add(int argc, char *const argv[]);
@@ -56,7 +64,11 @@ int run_remove(int argc, char *const argv[]);
 //
 //int run_grep(int argc, char *const argv[]);
 //
+int run_pre_commit(int argc, char *const argv[]);
+
 //void copy_dir(char *address, char *full_address);
+
+
 
 int check_time(char *time, char *committed_time);
 
@@ -247,6 +259,9 @@ int create_configs(char *username, char *email) {
     fclose(file);
     if (mkdir(".neogit/branches/master/commits", 0755) != 0) return 1;
 
+    file = fopen(".neogit/hooks", "w");
+    fclose(file);
+
     file = fopen(".neogit/current_commit_id", "w");
     fprintf(file, "%s\n", "0");
     fclose(file);
@@ -315,6 +330,85 @@ int creat_alias() {
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
+
+long long get_size(char *file_name) {
+
+    FILE *file = fopen(file_name, "r");
+    if (file == NULL) {
+        printf("error finding the file\n");
+        return -1;
+    }
+    fseek(file, 0L, SEEK_END);
+    long int size = ftell(file);
+    fclose(file);
+    size = (size / (1024 * 1024));
+    if (size > 5)
+        return 1;
+    return 0;
+}
+
+int todo_check(char *file_name) {
+    int flag = -1;
+    if ((strstr(file_name, ".c") != NULL) || (strstr(file_name, ".cpp") != NULL))
+        flag = 1;
+    else if (strstr(file_name, ".txt") != NULL)
+        flag = 0;
+    if (flag == 1) {
+        FILE *file = fopen(file_name, "r");
+        if (file == NULL) {
+            printf("error finding the file\n");
+            return -1;
+        }
+        int check = 0;
+        char word[] = "//todo";
+        char *file_content = (char *) malloc(10000 * sizeof(char));
+        while (fgets(file_content, 10000, file) != NULL) {
+            if (file_content[strlen(file_content) - 1] == '\n')
+                file_content[strlen(file_content) - 1] = '\0';
+            if (strstr(file_content, word) != NULL)
+                return 1;
+        }
+            return 0;
+    }
+    if (flag == 0) {
+        FILE *file = fopen(file_name, "r");
+        if (file == NULL) {
+            printf("error finding the file\n");
+            return -1;
+        }
+        char word[] = "todo";
+        char *file_content = (char *) malloc(10000 * sizeof(char));
+        while (fgets(file_content, 10000, file) != NULL) {
+            if (file_content[strlen(file_content) - 1] == '\n')
+                file_content[strlen(file_content) - 1] = '\0';
+            if (strstr(file_content, word) != NULL)
+                return 1;
+        }
+        return 0;
+    }
+    return -1;
+}
+
+int format_check(char *file_name) {
+    int flag = 1;
+    if ((strstr(file_name, ".c") != NULL) || (strstr(file_name, ".cpp") != NULL) ||
+        (strstr(file_name, ".txt") != NULL) || (strstr(file_name, ".mp3") != NULL) ||
+        (strstr(file_name, ".wav") != NULL) || (strstr(file_name, ".mp4") != NULL) ||
+        (strstr(file_name, ".png") != NULL))
+        flag = 0;
+    return flag;
+}
+
+int character_limit(char *file_name) {
+    FILE *file = fopen(file_name, "r");
+    char *file_content = (char *) malloc(10000 * sizeof(char));
+    fscanf(file, "%[^\r]s", file_content);
+    unsigned long long length;
+    length = strlen(file_content);
+    if (length > 20000)
+        return 1;
+    return 0;
+}
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -1136,7 +1230,7 @@ int run_commit(int argc, char *const argv[]) {
 
         //change current commit
         file = fopen(".neogit/current_commit_id", "w");
-        fprintf(file, "%d %s\n", id , commit_address);///////////////////////id++?
+        fprintf(file, "%d %s\n", id, commit_address);///////////////////////id++?
         fclose(file);
 
         //change commits id
@@ -1635,7 +1729,7 @@ int run_checkout(int argc, char *const argv[]) {
                 if (last_branch[strlen(last_branch) - 1] == '\n')
                     last_branch[strlen(last_branch) - 1] = '\0';
                 fclose(file);
-     /////////////////////////////////           ///////////////////////////last commit
+                /////////////////////////////////           ///////////////////////////last commit
 //                char *last_branch_to_id = (char *) malloc(10000 * sizeof(char));
 //                strcpy(last_branch_to_id, ".neogit/branches/");
 //                strcat(last_branch_to_id, last_branch);
@@ -1913,24 +2007,23 @@ int run_checkout(int argc, char *const argv[]) {
 
 
                 //find given id
-                file = fopen(".neogit/commits_addressandid" , "r");
-                char * given_commit = (char *) malloc(10000 * sizeof(char));
-                char * given_commit_address = (char *) malloc(10000 * sizeof(char));
+                file = fopen(".neogit/commits_addressandid", "r");
+                char *given_commit = (char *) malloc(10000 * sizeof(char));
+                char *given_commit_address = (char *) malloc(10000 * sizeof(char));
                 while (fgets(given_commit, 10000, file) != NULL) {
                     if (given_commit[strlen(given_commit) - 1] == '\n')
                         given_commit[strlen(given_commit) - 1] = '\0';
-                    char * tokes = strtok(given_commit , " ");
-                    if(strcmp(tokes , sth) == 0)
-                    {
-                        tokes = strtok(NULL , " ");
-                        strcpy(given_commit_address , tokes);
+                    char *tokes = strtok(given_commit, " ");
+                    if (strcmp(tokes, sth) == 0) {
+                        tokes = strtok(NULL, " ");
+                        strcpy(given_commit_address, tokes);
                         break;
                     }
                 }
                 fclose(file);
 
                 //copy
-                char * new_rep_file = (char *) malloc(10000 * sizeof(char));
+                char *new_rep_file = (char *) malloc(10000 * sizeof(char));
                 dir = opendir(given_commit_address);
                 if (dir == NULL) {
                     perror("Error opening current directory");
@@ -1984,9 +2077,8 @@ int run_checkout(int argc, char *const argv[]) {
                     file = fopen(".neogit/branch_name", "w");
                     fprintf(file, "%s\n", which_branch);
                     fclose(file);
-                }
-                else{
-                    strcpy(which_branch , last_branch);
+                } else {
+                    strcpy(which_branch, last_branch);
                 }
 
                 //change current commit
@@ -3669,6 +3761,121 @@ int run_remove(int argc, char *const argv[]) {
 //        return 0;
 //    }
 
+int run_pre_commit(int argc, char *const argv[]) {
+    if (argc == 4) {
+        if ((strcmp(argv[2], "hooks") == 0) && (strcmp(argv[3], "lists") == 0)) {
+            printf("todo-check\n");
+            printf("eof-blank-space\n");
+            printf("format-check\n");
+            printf("balance-braces\n");
+            printf("indentation-check\n");
+            printf("static-error-check\n");
+            printf("file-size-check\n");
+            printf("character-limit\n");
+            printf("time-limit\n");
+
+        }
+        if ((strcmp(argv[2], "applied") == 0) && (strcmp(argv[2], "hooks") == 0)) {
+            FILE *file = fopen(".neogit/hooks", "r");
+            char *hooksid = (char *) malloc(10000 * sizeof(char));
+            while (fgets(hooksid, 10000, file) != NULL) {
+                if (hooksid[strlen(hooksid) - 1] == '\n')
+                    hooksid[strlen(hooksid) - 1] = '\0';
+                printf("%s\n", hooksid);
+            }
+        } else {
+            printf("invalid command\n");
+            return 1;
+        }
+    }
+    if (argc == 5) {
+        if ((strcmp(argv[2], "add") == 0) && (strcmp(argv[2], "hook") == 0)) {
+            FILE *file = fopen(".neogit/hooks", "a");
+            fprintf(file, "%s\n", argv[4]);
+            fclose(file);
+
+        }
+        if ((strcmp(argv[2], "remove") == 0) && (strcmp(argv[2], "hook") == 0)) {
+            FILE *file = fopen(".neogit/hooks", "r");
+            FILE *file2 = fopen(".neogit/hooks2", "w");
+            char *hooksid = (char *) malloc(10000 * sizeof(char));
+            while (fgets(hooksid, 10000, file) != NULL) {
+                if (hooksid[strlen(hooksid) - 1] == '\n')
+                    hooksid[strlen(hooksid) - 1] = '\0';
+                if (strcmp(hooksid, argv[4]) == 0) {
+                    if ((fgets(hooksid, 10000, file) != NULL)) {
+                        break;
+                    }
+                    fprintf(file2, "%s\n", hooksid);
+                }
+            }
+            fclose(file);
+            remove(".neogit/hooks");
+            fclose(file2);
+            rename(".neogit/hooks2", ".neogit/hooks");
+        } else {
+            printf("invalid command\n");
+            return 1;
+        }
+    }
+    if (argc == 2) {
+        struct dirent *entry;
+        DIR *dir = opendir(".neogit/staging");
+        if (dir == NULL) {
+            perror("Error opening current directory");
+            return 1;
+        }
+        FILE *file;
+        char *file_name = (char *) malloc(10000 * sizeof(char));
+        while ((entry = readdir(dir)) != NULL) {
+            if (entry->d_type == DT_REG) {
+                strcpy(file_name, entry->d_name);
+                printf("%s:\n", file_name);
+                file = fopen(".neogit/hooks", "r");
+                char *hooksid = (char *) malloc(10000 * sizeof(char));
+                while (fgets(hooksid, 10000, file) != NULL) {
+                    if (hooksid[strlen(hooksid) - 1] == '\n')
+                        hooksid[strlen(hooksid) - 1] = '\0';
+                    printf("%s............................................................", hooksid);
+                    long long int result = 0;
+                    if(strcmp(hooksid , "todo-check") == 0)
+                    {
+                        result = todo_check(file_name);
+                    }
+                    else if(strcmp(hooksid , "file-size-check") == 0)
+                    {
+                        result = get_size(file_name);
+                    }
+                    else if(strcmp(hooksid , "format-check") == 0)
+                    {
+                        result = format_check(file_name);
+                    }
+                    else if(strcmp(hooksid , "todo-check") == 0)
+                    {
+                        result = character_limit(file_name);
+                    }
+                    else
+                        continue;
+                    if(result == 0)
+                        printf("PASSED\n");
+                    if(result == 1)
+                        printf("FAILED\n");
+                    if(result == -1)
+                        printf("SKIPPED\n");
+
+                }
+
+            }
+        }
+        closedir(dir);
+    } else {
+        printf("invalid command\n");
+        return 1;
+    }
+
+    return 0;
+}
+
 /////////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char *argv[]) {
 
@@ -3710,7 +3917,9 @@ int main(int argc, char *argv[]) {
         return run_replace(argc, argv);
     } else if ((strcmp(argv[1], "remove") == 0) || (strcmp(true_command(argv[1]), "remove") == 0)) {
         return run_remove(argc, argv);
-//        }
+    } else if ((strcmp(argv[1], "pre_commit") == 0) || (strcmp(true_command(argv[1]), "pre_commit") == 0)) {
+        return run_pre_commit(argc, argv);
+    }
 ////    //else if ((strcmp(argv[1], "diff") == 0) || (strcmp(true_command(argv[1]), "diff") == 0)) {
 ////        return run_diff(argc, argv);
 ////    }
@@ -3719,8 +3928,8 @@ int main(int argc, char *argv[]) {
 //        } else if ((strcmp(argv[1], "grep") == 0) || (strcmp(true_command(argv[1]), "grep") == 0)) {
 //            return run_grep(argc, argv);
 //        } else {
-        printf("invalid command\n");
-    }
+    printf("invalid command\n");
+    //}
 
     return 0;
 }
