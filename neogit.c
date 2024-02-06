@@ -274,6 +274,10 @@ int create_configs(char *username, char *email) {
     fclose(file);
     if (mkdir(".neogit/branches/master/commits", 0755) != 0) return 1;
 
+    file = fopen(".neogit/last_address", "w");
+    fprintf(file, "%s\n", "0");
+    fclose(file);
+
     file = fopen(".neogit/hooks", "w");
     fclose(file);
 
@@ -696,7 +700,6 @@ int run_config(int argc, char *argv[]) {
 //                fclose(file_proj2);
 //                rename("/home/aryana/Desktop/project/data/alias2", "/home/aryana/Desktop/project/data/alias");
                 //////////////////////////////////////////////////////////////////////////
-                printf("1\n");
                 char *neogit_addresses;
                 neogit_addresses = (char *) malloc(10000 * sizeof(char));
                 FILE *find = fopen("/home/aryana/Desktop/project/data/address", "r");
@@ -710,13 +713,13 @@ int run_config(int argc, char *argv[]) {
                     char *neogit_addresses2;
                     neogit_addresses2 = (char *) malloc(10000 * sizeof(char));
                     strcpy(neogit_addresses2, neogit_addresses);
-                    printf("%s , %s\n", neogit_addresses, neogit_addresses2);
+                    //printf("%s , %s\n", neogit_addresses, neogit_addresses2);
                     strcat(neogit_addresses2, "/.neogit/alias");
-                    printf("%s , %s\n", neogit_addresses, neogit_addresses2);
+                    //printf("%s , %s\n", neogit_addresses, neogit_addresses2);
                     FILE *file = fopen(neogit_addresses2, "r");
                     if (file == NULL) return 1;///////////////////////////////////////////?????
                     strcat(neogit_addresses, "/.neogit/alias2");
-                    printf("%s , %s\n", neogit_addresses, neogit_addresses2);
+                    //printf("%s , %s\n", neogit_addresses, neogit_addresses2);
                     FILE *file2 = fopen(neogit_addresses, "w");
                     char *file_content = (char *) malloc(10000 * sizeof(char));
                     for (int i = 0; i < result - 1; i++) {
@@ -730,7 +733,7 @@ int run_config(int argc, char *argv[]) {
                         file_content[strlen(file_content) - 1] = '\0';
                     fprintf(file2, "%s ", file_content);
                     fprintf(file2, "%s\n", argv[4]);
-                    for (int i = result; i < 9; i++) {
+                    for (int i = result; i < 16; i++) {
                         fgets(file_content, 10000, file);
                         if (file_content[strlen(file_content) - 1] == '\n')
                             file_content[strlen(file_content) - 1] = '\0';
@@ -876,6 +879,7 @@ int run_add(int argc, char *const argv[]) {
             }
             fclose(file);
         }
+
         //printf("flag = %d\n" , flag);
         FILE *file = fopen(".neogit/add_address", "a");
         if (file == NULL) return 1;
@@ -917,6 +921,32 @@ int run_add(int argc, char *const argv[]) {
             fclose(file);
             fclose(stage);
         }
+        FILE *l_add;
+        if(strcmp(argv[2] , "-f") == 0){
+            if (i == 3) {
+                l_add = fopen(".neogit/last_address", "w");
+                fprintf(l_add, "%s\n", argv[i]);
+            }
+
+            else {
+                l_add = fopen(".neogit/last_address", "a");
+                fprintf(l_add, "%s\n", argv[i]);
+            }
+        }
+        else{
+            printf("0\n");
+            if (i == 2) {
+                l_add = fopen(".neogit/last_address", "w");
+                fprintf(l_add, "%s\n", argv[i]);
+                printf("1\n");
+            }
+            else {
+                l_add = fopen(".neogit/last_address", "a");
+                fprintf(l_add, "%s\n", argv[i]);
+                printf("2\n");
+            }
+        }
+        fclose(l_add);
     }
     return 0;
 }
@@ -1052,44 +1082,52 @@ int run_reset(int argc, char *const argv[]) {
             }
         } else if (strcmp(argv[2], "-undo") == 0) {
 
-            FILE *last_unstaged = fopen(".neogit/unstag_address", "r"); //////close
+            FILE *last_unstaged = fopen(".neogit/last_address", "r"); //////close
             if (last_unstaged == NULL)
-                return 1;////////////////////////////??????????????????????
-            char *last_unstaged_address = (char *) malloc(10000 * sizeof(char));
-            if (fgets(last_unstaged_address, 10000, last_unstaged) == NULL)
                 return 1;
-            if (last_unstaged_address[strlen(last_unstaged_address) - 1] == '\n')
-                last_unstaged_address[strlen(last_unstaged_address) - 1] = '\0';
-            fclose(last_unstaged);
-            int flag = 0;
-            DIR *dir = opendir(last_unstaged_address);
-            if (dir == NULL) {
-                closedir(dir);
-                FILE *file = fopen(last_unstaged_address, "r");
-                flag = 1;
-                if (file == NULL) {
-                    printf("file or directory doesn't exist\n");
-                    return 1;
-                }
-
-                fclose(file);
-            }
-            printf("%d\n", flag);
-            if (flag == 1) {
+            char * last_add = (char *) malloc(10000 * sizeof(char));
+            while (fgets(last_add, 10000, last_unstaged) != NULL) {
+                if (last_add[strlen(last_add) - 1] == '\n')
+                    last_add[strlen(last_add) - 1] = '\0';
+                char * stage = (char *) malloc(10000 * sizeof(char));
+                strcpy(stage , ".neogit/staging/");
+                strcat(stage , last_add);
                 char command[10000] = "";
-                sprintf(command, "rsync -r %s %s", last_unstaged_address, ".neogit/staging");
+                sprintf(command, "rsync -r %s %s", stage, ".neogit/unstaging");
                 system(command);
                 char command2[10000] = "";
-                sprintf(command2, "rm -r %s", last_unstaged_address);
+                sprintf(command2, "rm -r %s", stage);
                 system(command2);
-                return 0;
-            } else if (flag == 0) {
-                char command[10000] = "";
-                sprintf(command, "rsync -r %s %s", last_unstaged_address, ".neogit/staging");
-                system(command);
-                char command2[10000] = "";
-                sprintf(command2, "rm -r %s", last_unstaged_address);
-                system(command2);
+//            }
+//            int flag = 0;
+//            DIR *dir = opendir(last_unstaged_address);
+//            if (dir == NULL) {
+//                closedir(dir);
+//                FILE *file = fopen(last_unstaged_address, "r");
+//                flag = 1;
+//                if (file == NULL) {
+//                    printf("file or directory doesn't exist\n");
+//                    return 1;
+//                }
+//
+//                fclose(file);
+//            }
+//            printf("%d\n", flag);
+//            if (flag == 1) {
+//                char command[10000] = "";
+//                sprintf(command, "rsync -r %s %s", last_unstaged_address, ".neogit/staging");
+//                system(command);
+//                char command2[10000] = "";
+//                sprintf(command2, "rm -r %s", last_unstaged_address);
+//                system(command2);
+//                return 0;
+//            } else if (flag == 0) {
+//                char command[10000] = "";
+//                sprintf(command, "rsync -r %s %s", last_unstaged_address, ".neogit/staging");
+//                system(command);
+//                char command2[10000] = "";
+//                sprintf(command2, "rm -r %s", last_unstaged_address);
+//                system(command2);
                 return 0;
             }
         }
@@ -2333,11 +2371,11 @@ int run_status(int argc, char *const argv[]) {
 
 int run_set(int argc, char *const argv[]) {
     if (argc != 6) {
-        printf("invalid command\n");
+        printf("invalid2 command\n");
         return 1;
     }
     if ((strcmp(argv[2], "-m") != 0) || (strcmp(argv[4], "-s") != 0)) {
-        printf("invalid command\n");
+        printf("invalid1 command\n");
         return 1;
     }
     if (strlen(argv[3]) > 72) {
@@ -2538,16 +2576,15 @@ int run_diff(int argc, char *const argv[]) {
             flag = 0;
             while (isWhitespaceLine(file1_content) == 1) {
                 fgets(file1_content, 10000, file1);
-                if (file1_content == NULL)
-                {
+                if (file1_content == NULL) {
                     flag = 1;
                     break;
                 }
             }
-            if(flag == 1)
+            if (flag == 1)
                 break;
             counter_line1++;
-            if(fgets(file2_content, 10000, file2) == NULL)
+            if (fgets(file2_content, 10000, file2) == NULL)
                 break;
             while (isWhitespaceLine(file2_content) == 1) {
                 fgets(file2_content, 10000, file2);
@@ -2556,7 +2593,7 @@ int run_diff(int argc, char *const argv[]) {
                     break;
                 }
             }
-            if(flag == 2)
+            if (flag == 2)
                 break;
             counter_line2++;
             if (strcmp(file1_content, file2_content) != 0) {
@@ -2568,7 +2605,7 @@ int run_diff(int argc, char *const argv[]) {
         }
         fclose(file1);
         fclose(file2);
-        flag  = 0;
+        flag = 0;
         file1 = fopen(address1, "r");
         file2 = fopen(address2, "r");
         if (line1 < line2) {
@@ -2623,11 +2660,164 @@ int run_diff(int argc, char *const argv[]) {
             }
         }
         return 0;
-    } else if (argc == 9)
-    {
+    } else if (argc == 9) {
+//        if (strcmp(argv[2], "-f") != 0) {
+//            printf("invalid command\n");
+//            return 1;
+//        }
+//        if (strcmp(argv[5], "-line1") != 0) {
+//            printf("invalid command\n");
+//            return 1;
+//        }
+//        if (strcmp(argv[7], "-line2") != 0) {
+//            printf("invalid command\n");
+//            return 1;
+//        }
+//        char * file1_begin = (char *) malloc(100 * sizeof(char));
+//        char * file1_end = (char *) malloc(100 * sizeof(char));
+//        char * file2_begin = (char *) malloc(100 * sizeof(char));
+//        char * file2_end = (char *) malloc(100 * sizeof(char));
+//        file1_begin = strtok(argv[6] , "-");
+//        //find file 1
+//        char *address1 = (char *) malloc(10000 * sizeof(char));
+//        strcpy(address1, argv[3]);
+//        FILE *file1 = fopen(address1, "r");
+//        if (file1 == NULL) {
+//            printf("file1 doesnt exist\n");
+//            return 1;
+//        }
+//
+//        //find file2
+//        char *address2 = (char *) malloc(10000 * sizeof(char));
+//        strcpy(address2, argv[4]);
+//        FILE *file2 = fopen(address2, "r");
+//        if (file2 == NULL) {
+//            printf("file2 doesnt exist\n");
+//            return 1;
+//        }
+//
+//
+//        //counter line
+//        int line1 = 0;
+//        int line2 = 0;
+//        int min_line = 0;
+//        int counter_line = 0;
+//        char *file1_content = (char *) malloc(10000 * sizeof(char));
+//        char *file2_content = (char *) malloc(10000 * sizeof(char));
+//        while (fgets(file1_content, 10000, file1) != NULL) {
+//            while (isWhitespaceLine(file1_content) == 1) {
+//                fgets(file1_content, 10000, file1);
+//                if (file1_content == NULL)
+//                    break;
+//            }
+//            line1++;
+//            while (fgets(file2_content, 10000, file2) != NULL) {
+//                while (isWhitespaceLine(file2_content) == 1) {
+//                    fgets(file2_content, 10000, file2);
+//                    if (file1_content == NULL)
+//                        break;
+//                }
+//                line2++;
+//            }
+//        }
+//        fclose(file1);
+//        fclose(file2);
+//        //compare
+//        int flag = 0;
+//        file1 = fopen(address1, "r");
+//        file2 = fopen(address2, "r");
+//        int counter_line1 = 0;
+//        int counter_line2 = 0;
+//        while (fgets(file1_content, 10000, file1) != NULL) {
+//            flag = 0;
+//            while (isWhitespaceLine(file1_content) == 1) {
+//                fgets(file1_content, 10000, file1);
+//                if (file1_content == NULL)
+//                {
+//                    flag = 1;
+//                    break;
+//                }
+//            }
+//            if(flag == 1)
+//                break;
+//            counter_line1++;
+//            if(fgets(file2_content, 10000, file2) == NULL)
+//                break;
+//            while (isWhitespaceLine(file2_content) == 1) {
+//                fgets(file2_content, 10000, file2);
+//                if (file2_content == NULL) {
+//                    flag = 2;
+//                    break;
+//                }
+//            }
+//            if(flag == 2)
+//                break;
+//            counter_line2++;
+//            if (strcmp(file1_content, file2_content) != 0) {
+//                printf("%s %d\n", address1, counter_line1);
+//                printf(BLU "%s" Reset, file1_content);
+//                printf("%s %d\n", address2, counter_line2);
+//                printf(RED "%s" Reset, file2_content);
+//            }
+//        }
+//        fclose(file1);
+//        fclose(file2);
+//        flag  = 0;
+//        file1 = fopen(address1, "r");
+//        file2 = fopen(address2, "r");
+//        if (line1 < line2) {
+//            while (fgets(file1_content, 10000, file1) != NULL) {
+//
+//                while (isWhitespaceLine(file1_content) == 1) {
+//                    fgets(file1_content, 10000, file1);
+//                    if (file1_content == NULL)
+//                        break;
+//                }
+//                fgets(file2_content, 10000, file2);
+//                while (isWhitespaceLine(file2_content) == 1) {
+//                    fgets(file2_content, 10000, file2);
+//                    if (file2_content == NULL)
+//                        break;
+//                }
+//            }
+//            printf("extra lines in %s\n", address2);
+//            while (fgets(file2_content, 10000, file2) != NULL) {
+//                while (isWhitespaceLine(file2_content) == 1) {
+//                    fgets(file2_content, 10000, file2);
+//                    if (file2_content == NULL)
+//                        break;
+//                }
+//                printf(RED "%s" Reset, file2_content);
+//            }
+//        }
+//        if (line1 > line2) {
+//            while (fgets(file2_content, 10000, file2) != NULL) {
+//
+//                while (isWhitespaceLine(file2_content) == 1) {
+//                    fgets(file2_content, 10000, file2);
+//                    if (file2_content == NULL)
+//                        break;
+//
+//                }
+//                fgets(file1_content, 10000, file1);
+//                while (isWhitespaceLine(file1_content) == 1) {
+//                    fgets(file1_content, 10000, file1);
+//                    if (file1_content == NULL)
+//                        break;
+//                }
+//            }
+//            printf("extra lines in %s\n", address1);
+//            while (fgets(file1_content, 10000, file1) != NULL) {
+//                while (isWhitespaceLine(file1_content) == 1) {
+//                    fgets(file1_content, 10000, file1);
+//                    if (file1_content == NULL)
+//                        break;
+//                }
+//                printf(BLU "%s" Reset, file1_content);
+//            }
+//        }
         return 0;
-    }
-    else {
+    } else {
         printf("invalid command\n");
         return 1;
     }
@@ -2658,7 +2848,7 @@ int run_tag(int argc, char *const argv[]) {
                 fclose(file);
 
                 //current id
-                file = fopen(".neogit/ccurrent_commit_id", "r");
+                file = fopen(".neogit/current_commit_id", "r");
                 char *current_id = (char *) malloc(10000 * sizeof(char));
                 fgets(current_id, 10000, file);
                 if (current_id[strlen(current_id) - 1] == '\n')
@@ -2715,11 +2905,12 @@ int run_tag(int argc, char *const argv[]) {
                             } else if (tags[i] > new_tag[i]) {
                                 flag = 1;
                                 fprintf(file2, "%s\n", new_tag);
+                                fprintf(file2, "%s\n", tags);
                                 break;
                             }
                         }
                     }
-                    if (flag == 1) {
+                    if (flag == 0) {
                         fprintf(file2, "%s\n", new_tag);
                     }
                     fclose(file);
@@ -4058,7 +4249,7 @@ int run_pre_commit(int argc, char *const argv[]) {
         while ((entry = readdir(dir)) != NULL) {
             if (entry->d_type == DT_REG) {
                 strcpy(file_name, entry->d_name);
-
+                printf("1\n");
                 file = fopen(".neogit/hooks", "r");
                 char *hooksid = (char *) malloc(10000 * sizeof(char));
                 while (fgets(hooksid, 10000, file) != NULL) {
@@ -4158,7 +4349,7 @@ int main(int argc, char *argv[]) {
     } else if ((strcmp(argv[1], "grep") == 0) || (strcmp(true_command(argv[1]), "grep") == 0)) {
         return run_grep(argc, argv);
     } else {
-        printf("invalid command\n");
+        printf("invalid3 command\n");
     }
 
     return 0;
