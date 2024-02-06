@@ -2303,6 +2303,33 @@ int run_tag(int argc, char *const argv[]) {
                 }
                 fclose(file);
 
+                //current id
+                file = fopen(".neogit/ccurrent_commit_id", "r");
+                char *current_id = (char *) malloc(10000 * sizeof(char));
+                fgets(current_id, 10000, file);
+                if (current_id[strlen(current_id) - 1] == '\n')
+                    current_id[strlen(current_id) - 1] = '\0';
+                char *token = strtok(current_id, " ");
+                strcpy(current_id, token);
+                fclose(file);
+
+                //author
+                file = fopen(".neogit/config", "r");
+                char *user_name = (char *) malloc(10000 * sizeof(char));
+                char *email = (char *) malloc(10000 * sizeof(char));
+                fgets(user_name, 10000, file);
+                if (user_name[strlen(user_name) - 1] == '\n')
+                    user_name[strlen(user_name) - 1] = '\0';
+                fgets(email, 10000, file);
+                if (email[strlen(email) - 1] == '\n')
+                    email[strlen(email) - 1] = '\0';
+
+                //time
+                time_t cur = time(NULL);
+                char cur_time[1000] = "";
+                strcpy(cur_time, ctime(&cur));
+
+
                 //check if its first and write it
                 file = fopen(".neogit/tags/tag_name", "r");
                 fgets(tags, 10000, file);
@@ -2348,21 +2375,30 @@ int run_tag(int argc, char *const argv[]) {
                 }
 
                 //write in data
-                file = fopen(".neogit/tags/tag_data" , "r");
-                char * tag_contant = (char *) malloc(10000 * sizeof(char));
+                file = fopen(".neogit/tags/tag_data", "r");
+                char *tag_contant = (char *) malloc(10000 * sizeof(char));
                 fgets(tag_contant, 10000, file);
                 if (tag_contant[strlen(tag_contant) - 1] == '\n')
                     tag_contant[strlen(tag_contant) - 1] = '\0';
                 if (strcmp(tag_contant, "0") == 0) {
                     fclose(file);
                     file = fopen(".neogit/tags/tag_data", "w");
-                    fprintf(file, "%s\n", new_tag);
+                    fprintf(file, "%s ", new_tag);
+                    fprintf(file, "%s ", current_id);
+                    fprintf(file, "%s ", user_name);
+                    fprintf(file, "%s ", email);
+                    fprintf(file, "%s ", cur_time);
+                    fprintf(file, "%s\n", "0");
                     return 0;
-                }
-                else{
+                } else {
                     fclose(file);
                     file = fopen(".neogit/tags/tag_data", "a");
-                    fprintf(file, "%s\n", new_tag);
+                    fprintf(file, "%s ", new_tag);
+                    fprintf(file, "%s ", current_id);
+                    fprintf(file, "%s ", user_name);
+                    fprintf(file, "%s ", email);
+                    fprintf(file, "%s ", cur_time);
+                    fprintf(file, "%s\n", "0");
                     return 0;
                 }
 
@@ -2373,7 +2409,7 @@ int run_tag(int argc, char *const argv[]) {
             }
             return 0;
         } else if (argc == 5) {
-            if ((strcmp(argv[2], "-a") == 0) && (strcmp(argv[4], "-f"))) {
+            if ((strcmp(argv[2], "-a") == 0) && (strcmp(argv[4], "-f")) == 0) {
 
                 //new tag
                 int flag = 0;
@@ -2394,6 +2430,33 @@ int run_tag(int argc, char *const argv[]) {
                 fclose(file);
 
                 if (flag == 0) {
+
+                    //current id
+                    file = fopen(".neogit/ccurrent_commit_id", "r");
+                    char *current_id = (char *) malloc(10000 * sizeof(char));
+                    fgets(current_id, 10000, file);
+                    if (current_id[strlen(current_id) - 1] == '\n')
+                        current_id[strlen(current_id) - 1] = '\0';
+                    char *token = strtok(current_id, " ");
+                    strcpy(current_id, token);
+                    fclose(file);
+
+                    //author
+                    file = fopen(".neogit/config", "r");
+                    char *user_name = (char *) malloc(10000 * sizeof(char));
+                    char *email = (char *) malloc(10000 * sizeof(char));
+                    fgets(user_name, 10000, file);
+                    if (user_name[strlen(user_name) - 1] == '\n')
+                        user_name[strlen(user_name) - 1] = '\0';
+                    fgets(email, 10000, file);
+                    if (email[strlen(email) - 1] == '\n')
+                        email[strlen(email) - 1] = '\0';
+
+                    //time
+                    time_t cur = time(NULL);
+                    char cur_time[1000] = "";
+                    strcpy(cur_time, ctime(&cur));
+
                     //check if its first and write it
                     file = fopen(".neogit/tags/tag_name", "r");
                     fgets(tags, 10000, file);
@@ -2404,7 +2467,7 @@ int run_tag(int argc, char *const argv[]) {
                         file = fopen(".neogit/tags/tag_name", "w");
                         fprintf(file, "%s\n", argv[3]);
                     } else {
-                        //weite it
+                        //write it
                         fclose(file);
                         file = fopen(".neogit/tags/tag_name", "r");
                         FILE *file2 = fopen(".neogit/tags/tag_name2", "w");//close
@@ -2439,50 +2502,851 @@ int run_tag(int argc, char *const argv[]) {
                     }
 
                     //write in data
-                    file = fopen(".neogit/tags/tag_data" , "r");
-                    char * tag_contant = (char *) malloc(10000 * sizeof(char));
+                    file = fopen(".neogit/tags/tag_data", "r");
+                    char *tag_contant = (char *) malloc(10000 * sizeof(char));
                     fgets(tag_contant, 10000, file);
                     if (tag_contant[strlen(tag_contant) - 1] == '\n')
                         tag_contant[strlen(tag_contant) - 1] = '\0';
                     if (strcmp(tag_contant, "0") == 0) {
                         fclose(file);
                         file = fopen(".neogit/tags/tag_data", "w");
-                        fprintf(file, "%s\n", new_tag);
+                        fprintf(file, "%s ", new_tag);
+                        fprintf(file, "%s ", current_id);
+                        fprintf(file, "%s ", user_name);
+                        fprintf(file, "%s ", email);
+                        fprintf(file, "%s ", cur_time);
+                        fprintf(file, "%s\n", "0");
                         return 0;
-                    }
-                    else{
+                    } else {
                         fclose(file);
                         file = fopen(".neogit/tags/tag_data", "a");
-                        fprintf(file, "%s\n", new_tag);
+                        fprintf(file, "%s ", new_tag);
+                        fprintf(file, "%s ", current_id);
+                        fprintf(file, "%s ", user_name);
+                        fprintf(file, "%s ", email);
+                        fprintf(file, "%s ", cur_time);
+                        fprintf(file, "%s\n", "0");
                         return 0;
                     }
                 }
+                return 0;
 
             } else {
                 printf("invalid command\n");
                 return 1;
             }
         } else if (argc == 6) {
-            if(strcmp(argv[2], "-a") == 0){
-                if(strcmp(argv[2], "-a") == 0){}
-                else if(strcmp(argv[2], "-a") == 0){}
-                else{
+            if (strcmp(argv[2], "-a") == 0) {
+                if (strcmp(argv[4], "-m") == 0) {
+
+                    //new tag
+                    char *new_tag = (char *) malloc(10000 * sizeof(char));
+                    strcpy(new_tag, argv[3]);
+
+                    //check new tag
+                    char *tags = (char *) malloc(10000 * sizeof(char));
+                    FILE *file = fopen(".neogit/tags/tag_name", "r");
+                    while (fgets(tags, 10000, file) != NULL) {
+                        if (tags[strlen(tags) - 1] == '\n')
+                            tags[strlen(tags) - 1] = '\0';
+                        if (strcmp(new_tag, tags) == 0) {
+                            printf("this tag already exists\n");
+                            return 1;
+                        }
+                    }
+                    fclose(file);
+
+                    //message
+                    char *message = (char *) malloc(10000 * sizeof(char));
+                    strcpy(message, argv[5]);
+
+                    //current id
+                    file = fopen(".neogit/ccurrent_commit_id", "r");
+                    char *current_id = (char *) malloc(10000 * sizeof(char));
+                    fgets(current_id, 10000, file);
+                    if (current_id[strlen(current_id) - 1] == '\n')
+                        current_id[strlen(current_id) - 1] = '\0';
+                    char *token = strtok(current_id, " ");
+                    strcpy(current_id, token);
+                    fclose(file);
+
+                    //author
+                    file = fopen(".neogit/config", "r");
+                    char *user_name = (char *) malloc(10000 * sizeof(char));
+                    char *email = (char *) malloc(10000 * sizeof(char));
+                    fgets(user_name, 10000, file);
+                    if (user_name[strlen(user_name) - 1] == '\n')
+                        user_name[strlen(user_name) - 1] = '\0';
+                    fgets(email, 10000, file);
+                    if (email[strlen(email) - 1] == '\n')
+                        email[strlen(email) - 1] = '\0';
+
+                    //time
+                    time_t cur = time(NULL);
+                    char cur_time[1000] = "";
+                    strcpy(cur_time, ctime(&cur));
+
+
+                    //check if its first and write it
+                    file = fopen(".neogit/tags/tag_name", "r");
+                    fgets(tags, 10000, file);
+                    if (tags[strlen(tags) - 1] == '\n')
+                        tags[strlen(tags) - 1] = '\0';
+                    if (strcmp(tags, "0") == 0) {
+                        fclose(file);
+                        file = fopen(".neogit/tags/tag_name", "w");
+                        fprintf(file, "%s\n", new_tag);
+                    } else {
+                        //weite it
+                        fclose(file);
+                        file = fopen(".neogit/tags/tag_name", "r");
+                        FILE *file2 = fopen(".neogit/tags/tag_name2", "w");//close
+                        int flag = 0;
+                        while (fgets(tags, 10000, file) != NULL) {
+                            if (tags[strlen(tags) - 1] == '\n')
+                                tags[strlen(tags) - 1] = '\0';
+                            unsigned long cn;
+                            if (strlen(new_tag) >= strlen(tags)) {
+                                cn = strlen(tags);
+                            } else {
+                                cn = strlen(new_tag);
+                            }
+                            for (int i = 0; i < cn; i++) {
+                                if (tags[i] < new_tag[i]) {
+                                    fprintf(file2, "%s\n", tags);
+                                    break;
+                                } else if (tags[i] > new_tag[i]) {
+                                    flag = 1;
+                                    fprintf(file2, "%s\n", new_tag);
+                                    break;
+                                }
+                            }
+                        }
+                        if (flag == 1) {
+                            fprintf(file2, "%s\n", new_tag);
+                        }
+                        fclose(file);
+                        remove(".neogit/tags/tag_name");
+                        fclose(file2);
+                        rename(".neogit/tags/tag_name2", ".neogit/tags/tag_name");
+                    }
+
+                    //write in data
+                    file = fopen(".neogit/tags/tag_data", "r");
+                    char *tag_contant = (char *) malloc(10000 * sizeof(char));
+                    fgets(tag_contant, 10000, file);
+                    if (tag_contant[strlen(tag_contant) - 1] == '\n')
+                        tag_contant[strlen(tag_contant) - 1] = '\0';
+                    if (strcmp(tag_contant, "0") == 0) {
+                        fclose(file);
+                        file = fopen(".neogit/tags/tag_data", "w");
+                        fprintf(file, "%s ", new_tag);
+                        fprintf(file, "%s ", current_id);
+                        fprintf(file, "%s ", user_name);
+                        fprintf(file, "%s ", email);
+                        fprintf(file, "%s ", cur_time);
+                        fprintf(file, "%s\n", message);
+                        return 0;
+                    } else {
+                        fclose(file);
+                        file = fopen(".neogit/tags/tag_data", "a");
+                        fprintf(file, "%s ", new_tag);
+                        fprintf(file, "%s ", current_id);
+                        fprintf(file, "%s ", user_name);
+                        fprintf(file, "%s ", email);
+                        fprintf(file, "%s ", cur_time);
+                        fprintf(file, "%s\n", message);
+                        return 0;
+                    }
+                } else if (strcmp(argv[4], "-c") == 0) {
+
+                    //new tag
+                    char *new_tag = (char *) malloc(10000 * sizeof(char));
+                    strcpy(new_tag, argv[3]);
+
+                    //check new tag
+                    char *tags = (char *) malloc(10000 * sizeof(char));
+                    FILE *file = fopen(".neogit/tags/tag_name", "r");
+                    while (fgets(tags, 10000, file) != NULL) {
+                        if (tags[strlen(tags) - 1] == '\n')
+                            tags[strlen(tags) - 1] = '\0';
+                        if (strcmp(new_tag, tags) == 0) {
+                            printf("this tag already exists\n");
+                            return 1;
+                        }
+                    }
+                    fclose(file);
+
+                    //id
+                    char *id = (char *) malloc(10000 * sizeof(char));
+                    strcpy(id, argv[5]);
+
+                    //author
+                    file = fopen(".neogit/config", "r");
+                    char *user_name = (char *) malloc(10000 * sizeof(char));
+                    char *email = (char *) malloc(10000 * sizeof(char));
+                    fgets(user_name, 10000, file);
+                    if (user_name[strlen(user_name) - 1] == '\n')
+                        user_name[strlen(user_name) - 1] = '\0';
+                    fgets(email, 10000, file);
+                    if (email[strlen(email) - 1] == '\n')
+                        email[strlen(email) - 1] = '\0';
+
+                    //time
+                    time_t cur = time(NULL);
+                    char cur_time[1000] = "";
+                    strcpy(cur_time, ctime(&cur));
+
+
+                    //check if its first and write it
+                    file = fopen(".neogit/tags/tag_name", "r");
+                    fgets(tags, 10000, file);
+                    if (tags[strlen(tags) - 1] == '\n')
+                        tags[strlen(tags) - 1] = '\0';
+                    if (strcmp(tags, "0") == 0) {
+                        fclose(file);
+                        file = fopen(".neogit/tags/tag_name", "w");
+                        fprintf(file, "%s\n", new_tag);
+                    } else {
+                        //weite it
+                        fclose(file);
+                        file = fopen(".neogit/tags/tag_name", "r");
+                        FILE *file2 = fopen(".neogit/tags/tag_name2", "w");//close
+                        int flag = 0;
+                        while (fgets(tags, 10000, file) != NULL) {
+                            if (tags[strlen(tags) - 1] == '\n')
+                                tags[strlen(tags) - 1] = '\0';
+                            unsigned long cn;
+                            if (strlen(new_tag) >= strlen(tags)) {
+                                cn = strlen(tags);
+                            } else {
+                                cn = strlen(new_tag);
+                            }
+                            for (int i = 0; i < cn; i++) {
+                                if (tags[i] < new_tag[i]) {
+                                    fprintf(file2, "%s\n", tags);
+                                    break;
+                                } else if (tags[i] > new_tag[i]) {
+                                    flag = 1;
+                                    fprintf(file2, "%s\n", new_tag);
+                                    break;
+                                }
+                            }
+                        }
+                        if (flag == 1) {
+                            fprintf(file2, "%s\n", new_tag);
+                        }
+                        fclose(file);
+                        remove(".neogit/tags/tag_name");
+                        fclose(file2);
+                        rename(".neogit/tags/tag_name2", ".neogit/tags/tag_name");
+                    }
+
+                    //write in data
+                    file = fopen(".neogit/tags/tag_data", "r");
+                    char *tag_contant = (char *) malloc(10000 * sizeof(char));
+                    fgets(tag_contant, 10000, file);
+                    if (tag_contant[strlen(tag_contant) - 1] == '\n')
+                        tag_contant[strlen(tag_contant) - 1] = '\0';
+                    if (strcmp(tag_contant, "0") == 0) {
+                        fclose(file);
+                        file = fopen(".neogit/tags/tag_data", "w");
+                        fprintf(file, "%s ", new_tag);
+                        fprintf(file, "%s ", id);
+                        fprintf(file, "%s ", user_name);
+                        fprintf(file, "%s ", email);
+                        fprintf(file, "%s ", cur_time);
+                        fprintf(file, "%s\n", "0");
+                        return 0;
+                    } else {
+                        fclose(file);
+                        file = fopen(".neogit/tags/tag_data", "a");
+                        fprintf(file, "%s ", new_tag);
+                        fprintf(file, "%s ", id);
+                        fprintf(file, "%s ", user_name);
+                        fprintf(file, "%s ", email);
+                        fprintf(file, "%s ", cur_time);
+                        fprintf(file, "%s\n", "0");
+                        return 0;
+                    }
+
+                } else {
                     printf("invalid command\n");
                     return 1;
                 }
-            }
-            else{
+            } else {
                 printf("invalid command\n");
                 return 1;
             }
+        } else if (argc == 7) {
+            if (strcmp(argv[2], "-a") == 0) {
+                if ((strcmp(argv[4], "-m") == 0) && (strcmp(argv[4], "-f") == 0)) {
+
+                    //new tag
+                    char *new_tag = (char *) malloc(10000 * sizeof(char));
+                    strcpy(new_tag, argv[3]);
+
+                    //check new tag
+                    int check = 0;
+                    char *tags = (char *) malloc(10000 * sizeof(char));
+                    FILE *file = fopen(".neogit/tags/tag_name", "r");
+                    while (fgets(tags, 10000, file) != NULL) {
+                        if (tags[strlen(tags) - 1] == '\n')
+                            tags[strlen(tags) - 1] = '\0';
+                        if (strcmp(new_tag, tags) == 0) {
+                            check = 1;
+                        }
+                    }
+                    fclose(file);
+
+                    //message
+                    char *message = (char *) malloc(10000 * sizeof(char));
+                    strcpy(message, argv[5]);
+
+                    //current id
+                    file = fopen(".neogit/ccurrent_commit_id", "r");
+                    char *current_id = (char *) malloc(10000 * sizeof(char));
+                    fgets(current_id, 10000, file);
+                    if (current_id[strlen(current_id) - 1] == '\n')
+                        current_id[strlen(current_id) - 1] = '\0';
+                    char *token = strtok(current_id, " ");
+                    strcpy(current_id, token);
+                    fclose(file);
+
+                    //author
+                    file = fopen(".neogit/config", "r");
+                    char *user_name = (char *) malloc(10000 * sizeof(char));
+                    char *email = (char *) malloc(10000 * sizeof(char));
+                    fgets(user_name, 10000, file);
+                    if (user_name[strlen(user_name) - 1] == '\n')
+                        user_name[strlen(user_name) - 1] = '\0';
+                    fgets(email, 10000, file);
+                    if (email[strlen(email) - 1] == '\n')
+                        email[strlen(email) - 1] = '\0';
+
+                    //time
+                    time_t cur = time(NULL);
+                    char cur_time[1000] = "";
+                    strcpy(cur_time, ctime(&cur));
+
+                    if (check == 0) {
+                        //check if its first and write it
+                        file = fopen(".neogit/tags/tag_name", "r");
+                        fgets(tags, 10000, file);
+                        if (tags[strlen(tags) - 1] == '\n')
+                            tags[strlen(tags) - 1] = '\0';
+                        if (strcmp(tags, "0") == 0) {
+                            fclose(file);
+                            file = fopen(".neogit/tags/tag_name", "w");
+                            fprintf(file, "%s\n", new_tag);
+                        } else {
+                            //weite it
+                            fclose(file);
+                            file = fopen(".neogit/tags/tag_name", "r");
+                            FILE *file2 = fopen(".neogit/tags/tag_name2", "w");//close
+                            int flag = 0;
+                            while (fgets(tags, 10000, file) != NULL) {
+                                if (tags[strlen(tags) - 1] == '\n')
+                                    tags[strlen(tags) - 1] = '\0';
+                                unsigned long cn;
+                                if (strlen(new_tag) >= strlen(tags)) {
+                                    cn = strlen(tags);
+                                } else {
+                                    cn = strlen(new_tag);
+                                }
+                                for (int i = 0; i < cn; i++) {
+                                    if (tags[i] < new_tag[i]) {
+                                        fprintf(file2, "%s\n", tags);
+                                        break;
+                                    } else if (tags[i] > new_tag[i]) {
+                                        flag = 1;
+                                        fprintf(file2, "%s\n", new_tag);
+                                        break;
+                                    }
+                                }
+                            }
+                            if (flag == 1) {
+                                fprintf(file2, "%s\n", new_tag);
+                            }
+                            fclose(file);
+                            remove(".neogit/tags/tag_name");
+                            fclose(file2);
+                            rename(".neogit/tags/tag_name2", ".neogit/tags/tag_name");
+                        }
+
+                        //write in data
+                        file = fopen(".neogit/tags/tag_data", "r");
+                        char *tag_contant = (char *) malloc(10000 * sizeof(char));
+                        fgets(tag_contant, 10000, file);
+                        if (tag_contant[strlen(tag_contant) - 1] == '\n')
+                            tag_contant[strlen(tag_contant) - 1] = '\0';
+                        if (strcmp(tag_contant, "0") == 0) {
+                            fclose(file);
+                            file = fopen(".neogit/tags/tag_data", "w");
+                            fprintf(file, "%s ", new_tag);
+                            fprintf(file, "%s ", current_id);
+                            fprintf(file, "%s ", user_name);
+                            fprintf(file, "%s ", email);
+                            fprintf(file, "%s ", cur_time);
+                            fprintf(file, "%s\n", message);
+
+                        } else {
+                            fclose(file);
+                            file = fopen(".neogit/tags/tag_data", "a");
+                            fprintf(file, "%s ", new_tag);
+                            fprintf(file, "%s ", current_id);
+                            fprintf(file, "%s ", user_name);
+                            fprintf(file, "%s ", email);
+                            fprintf(file, "%s ", cur_time);
+                            fprintf(file, "%s\n", message);
+                        }
+                        fclose(file);
+                        return 0;
+                    } else {
+                        file = fopen(".neogit/tags/tag_data", "r");
+                        char *tag_content = (char *) malloc(10000 * sizeof(char));
+                        FILE *file2 = fopen(".neogit/tags/tag_data2", "w");
+                        while (fgets(tag_content, 10000, file) != NULL) {
+                            if (tag_content[strlen(tag_content) - 1] == '\n')
+                                tag_content[strlen(tag_content) - 1] = '\0';
+                            char *toke = strtok(tag_content, " ");
+                            if (strcmp(toke, new_tag) == 0) {
+                                fprintf(file2, "%s ", new_tag);
+                                fprintf(file2, "%s ", current_id);
+                                fprintf(file2, "%s ", user_name);
+                                fprintf(file2, "%s ", email);
+                                fprintf(file2, "%s ", cur_time);
+                                fprintf(file2, "%s\n", message);
+                            } else {
+                                fprintf(file2, "%s\n", tag_content);
+                            }
+                        }
+                        fclose(file);
+                        remove(".neogit/tags/tag_data");
+                        fclose(file2);
+                        rename(".neogit/tags/tag_data2", ".neogit/tags/tag_data");
+                        return 0;
+                    }
+                } else if ((strcmp(argv[4], "-c") == 0) && (strcmp(argv[4], "-f") == 0)) {
+
+                    //new tag
+                    char *new_tag = (char *) malloc(10000 * sizeof(char));
+                    strcpy(new_tag, argv[3]);
+
+                    //check new tag
+                    int check = 0;
+                    char *tags = (char *) malloc(10000 * sizeof(char));
+                    FILE *file = fopen(".neogit/tags/tag_name", "r");
+                    while (fgets(tags, 10000, file) != NULL) {
+                        if (tags[strlen(tags) - 1] == '\n')
+                            tags[strlen(tags) - 1] = '\0';
+                        if (strcmp(new_tag, tags) == 0) {
+                            check = 1;
+                        }
+                    }
+                    fclose(file);
+
+                    //id
+                    char *id = (char *) malloc(10000 * sizeof(char));
+                    strcpy(id, argv[5]);
+
+
+                    //author
+                    file = fopen(".neogit/config", "r");
+                    char *user_name = (char *) malloc(10000 * sizeof(char));
+                    char *email = (char *) malloc(10000 * sizeof(char));
+                    fgets(user_name, 10000, file);
+                    if (user_name[strlen(user_name) - 1] == '\n')
+                        user_name[strlen(user_name) - 1] = '\0';
+                    fgets(email, 10000, file);
+                    if (email[strlen(email) - 1] == '\n')
+                        email[strlen(email) - 1] = '\0';
+
+                    //time
+                    time_t cur = time(NULL);
+                    char cur_time[1000] = "";
+                    strcpy(cur_time, ctime(&cur));
+
+                    if (check == 0) {
+                        //check if its first and write it
+                        file = fopen(".neogit/tags/tag_name", "r");
+                        fgets(tags, 10000, file);
+                        if (tags[strlen(tags) - 1] == '\n')
+                            tags[strlen(tags) - 1] = '\0';
+                        if (strcmp(tags, "0") == 0) {
+                            fclose(file);
+                            file = fopen(".neogit/tags/tag_name", "w");
+                            fprintf(file, "%s\n", new_tag);
+                        } else {
+                            //weite it
+                            fclose(file);
+                            file = fopen(".neogit/tags/tag_name", "r");
+                            FILE *file2 = fopen(".neogit/tags/tag_name2", "w");//close
+                            int flag = 0;
+                            while (fgets(tags, 10000, file) != NULL) {
+                                if (tags[strlen(tags) - 1] == '\n')
+                                    tags[strlen(tags) - 1] = '\0';
+                                unsigned long cn;
+                                if (strlen(new_tag) >= strlen(tags)) {
+                                    cn = strlen(tags);
+                                } else {
+                                    cn = strlen(new_tag);
+                                }
+                                for (int i = 0; i < cn; i++) {
+                                    if (tags[i] < new_tag[i]) {
+                                        fprintf(file2, "%s\n", tags);
+                                        break;
+                                    } else if (tags[i] > new_tag[i]) {
+                                        flag = 1;
+                                        fprintf(file2, "%s\n", new_tag);
+                                        break;
+                                    }
+                                }
+                            }
+                            if (flag == 1) {
+                                fprintf(file2, "%s\n", new_tag);
+                            }
+                            fclose(file);
+                            remove(".neogit/tags/tag_name");
+                            fclose(file2);
+                            rename(".neogit/tags/tag_name2", ".neogit/tags/tag_name");
+                        }
+
+                        //write in data
+                        file = fopen(".neogit/tags/tag_data", "r");
+                        char *tag_contant = (char *) malloc(10000 * sizeof(char));
+                        fgets(tag_contant, 10000, file);
+                        if (tag_contant[strlen(tag_contant) - 1] == '\n')
+                            tag_contant[strlen(tag_contant) - 1] = '\0';
+                        if (strcmp(tag_contant, "0") == 0) {
+                            fclose(file);
+                            file = fopen(".neogit/tags/tag_data", "w");
+                            fprintf(file, "%s ", new_tag);
+                            fprintf(file, "%s ", id);
+                            fprintf(file, "%s ", user_name);
+                            fprintf(file, "%s ", email);
+                            fprintf(file, "%s ", cur_time);
+                            fprintf(file, "%s\n", "0");
+
+                        } else {
+                            fclose(file);
+                            file = fopen(".neogit/tags/tag_data", "a");
+                            fprintf(file, "%s ", new_tag);
+                            fprintf(file, "%s ", id);
+                            fprintf(file, "%s ", user_name);
+                            fprintf(file, "%s ", email);
+                            fprintf(file, "%s ", cur_time);
+                            fprintf(file, "%s\n", "0");
+                        }
+                        fclose(file);
+                        return 0;
+                    } else {
+                        file = fopen(".neogit/tags/tag_data", "r");
+                        char *tag_content = (char *) malloc(10000 * sizeof(char));
+                        FILE *file2 = fopen(".neogit/tags/tag_data2", "w");
+                        while (fgets(tag_content, 10000, file) != NULL) {
+                            if (tag_content[strlen(tag_content) - 1] == '\n')
+                                tag_content[strlen(tag_content) - 1] = '\0';
+                            char *toke = strtok(tag_content, " ");
+                            if (strcmp(toke, new_tag) == 0) {
+                                fprintf(file2, "%s ", new_tag);
+                                fprintf(file2, "%s ", id);
+                                fprintf(file2, "%s ", user_name);
+                                fprintf(file2, "%s ", email);
+                                fprintf(file2, "%s ", cur_time);
+                                fprintf(file2, "%s\n", "0");
+                            } else {
+                                fprintf(file2, "%s\n", tag_content);
+                            }
+                        }
+                        fclose(file);
+                        remove(".neogit/tags/tag_data");
+                        fclose(file2);
+                        rename(".neogit/tags/tag_data2", ".neogit/tags/tag_data");
+                        return 0;
+                    }
+                } else {
+                    printf("invalid command\n");
+                    return 1;
+                }
+            } else {
+                printf("invalid command\n");
+                return 1;
+            }
+        } else if (argc == 8) {
+            if ((strcmp(argv[4], "-m") == 0) && (strcmp(argv[6], "-c") == 0)) {
+
+                //new tag
+                char *new_tag = (char *) malloc(10000 * sizeof(char));
+                strcpy(new_tag, argv[3]);
+
+                //check new tag
+                char *tags = (char *) malloc(10000 * sizeof(char));
+                FILE *file = fopen(".neogit/tags/tag_name", "r");
+                while (fgets(tags, 10000, file) != NULL) {
+                    if (tags[strlen(tags) - 1] == '\n')
+                        tags[strlen(tags) - 1] = '\0';
+                    if (strcmp(new_tag, tags) == 0) {
+                        printf("this tag already exists\n");
+                        return 1;
+                    }
+                }
+                fclose(file);
+
+                //message
+                char *message = (char *) malloc(10000 * sizeof(char));
+                strcpy(message, argv[5]);
+
+                //id
+                char *id = (char *) malloc(10000 * sizeof(char));
+                strcpy(id, argv[7]);
+
+                //author
+                file = fopen(".neogit/config", "r");
+                char *user_name = (char *) malloc(10000 * sizeof(char));
+                char *email = (char *) malloc(10000 * sizeof(char));
+                fgets(user_name, 10000, file);
+                if (user_name[strlen(user_name) - 1] == '\n')
+                    user_name[strlen(user_name) - 1] = '\0';
+                fgets(email, 10000, file);
+                if (email[strlen(email) - 1] == '\n')
+                    email[strlen(email) - 1] = '\0';
+
+                //time
+                time_t cur = time(NULL);
+                char cur_time[1000] = "";
+                strcpy(cur_time, ctime(&cur));
+
+
+                //check if its first and write it
+                file = fopen(".neogit/tags/tag_name", "r");
+                fgets(tags, 10000, file);
+                if (tags[strlen(tags) - 1] == '\n')
+                    tags[strlen(tags) - 1] = '\0';
+                if (strcmp(tags, "0") == 0) {
+                    fclose(file);
+                    file = fopen(".neogit/tags/tag_name", "w");
+                    fprintf(file, "%s\n", new_tag);
+                } else {
+                    //weite it
+                    fclose(file);
+                    file = fopen(".neogit/tags/tag_name", "r");
+                    FILE *file2 = fopen(".neogit/tags/tag_name2", "w");//close
+                    int flag = 0;
+                    while (fgets(tags, 10000, file) != NULL) {
+                        if (tags[strlen(tags) - 1] == '\n')
+                            tags[strlen(tags) - 1] = '\0';
+                        unsigned long cn;
+                        if (strlen(new_tag) >= strlen(tags)) {
+                            cn = strlen(tags);
+                        } else {
+                            cn = strlen(new_tag);
+                        }
+                        for (int i = 0; i < cn; i++) {
+                            if (tags[i] < new_tag[i]) {
+                                fprintf(file2, "%s\n", tags);
+                                break;
+                            } else if (tags[i] > new_tag[i]) {
+                                flag = 1;
+                                fprintf(file2, "%s\n", new_tag);
+                                break;
+                            }
+                        }
+                    }
+                    if (flag == 1) {
+                        fprintf(file2, "%s\n", new_tag);
+                    }
+                    fclose(file);
+                    remove(".neogit/tags/tag_name");
+                    fclose(file2);
+                    rename(".neogit/tags/tag_name2", ".neogit/tags/tag_name");
+                }
+
+                //write in data
+                file = fopen(".neogit/tags/tag_data", "r");
+                char *tag_contant = (char *) malloc(10000 * sizeof(char));
+                fgets(tag_contant, 10000, file);
+                if (tag_contant[strlen(tag_contant) - 1] == '\n')
+                    tag_contant[strlen(tag_contant) - 1] = '\0';
+                if (strcmp(tag_contant, "0") == 0) {
+                    fclose(file);
+                    file = fopen(".neogit/tags/tag_data", "w");
+                    fprintf(file, "%s ", new_tag);
+                    fprintf(file, "%s ", id);
+                    fprintf(file, "%s ", user_name);
+                    fprintf(file, "%s ", email);
+                    fprintf(file, "%s ", cur_time);
+                    fprintf(file, "%s\n", message);
+                    return 0;
+                } else {
+                    fclose(file);
+                    file = fopen(".neogit/tags/tag_data", "a");
+                    fprintf(file, "%s ", new_tag);
+                    fprintf(file, "%s ", id);
+                    fprintf(file, "%s ", user_name);
+                    fprintf(file, "%s ", email);
+                    fprintf(file, "%s ", cur_time);
+                    fprintf(file, "%s\n", message);
+                    return 0;
+                }
+
+            } else {
+                printf("invalid command\n");
+                return 1;
+            }
+        }  else if (argc == 9) {
+            if ((strcmp(argv[4], "-m") == 0) && (strcmp(argv[6], "-c") == 0) && (strcmp(argv[8], "-f") == 0)) {
+                //new tag
+                char *new_tag = (char *) malloc(10000 * sizeof(char));
+                strcpy(new_tag, argv[3]);
+
+                //check new tag
+                int check = 0;
+                char *tags = (char *) malloc(10000 * sizeof(char));
+                FILE *file = fopen(".neogit/tags/tag_name", "r");
+                while (fgets(tags, 10000, file) != NULL) {
+                    if (tags[strlen(tags) - 1] == '\n')
+                        tags[strlen(tags) - 1] = '\0';
+                    if (strcmp(new_tag, tags) == 0) {
+                        check = 1;
+                    }
+                }
+                fclose(file);
+
+                //message
+                char *message = (char *) malloc(10000 * sizeof(char));
+                strcpy(message, argv[5]);
+
+                //id
+                char *id = (char *) malloc(10000 * sizeof(char));
+                strcpy(id, argv[7]);
+
+
+                //author
+                file = fopen(".neogit/config", "r");
+                char *user_name = (char *) malloc(10000 * sizeof(char));
+                char *email = (char *) malloc(10000 * sizeof(char));
+                fgets(user_name, 10000, file);
+                if (user_name[strlen(user_name) - 1] == '\n')
+                    user_name[strlen(user_name) - 1] = '\0';
+                fgets(email, 10000, file);
+                if (email[strlen(email) - 1] == '\n')
+                    email[strlen(email) - 1] = '\0';
+
+                //time
+                time_t cur = time(NULL);
+                char cur_time[1000] = "";
+                strcpy(cur_time, ctime(&cur));
+
+                if (check == 0) {
+                    //check if its first and write it
+                    file = fopen(".neogit/tags/tag_name", "r");
+                    fgets(tags, 10000, file);
+                    if (tags[strlen(tags) - 1] == '\n')
+                        tags[strlen(tags) - 1] = '\0';
+                    if (strcmp(tags, "0") == 0) {
+                        fclose(file);
+                        file = fopen(".neogit/tags/tag_name", "w");
+                        fprintf(file, "%s\n", new_tag);
+                    } else {
+                        //weite it
+                        fclose(file);
+                        file = fopen(".neogit/tags/tag_name", "r");
+                        FILE *file2 = fopen(".neogit/tags/tag_name2", "w");//close
+                        int flag = 0;
+                        while (fgets(tags, 10000, file) != NULL) {
+                            if (tags[strlen(tags) - 1] == '\n')
+                                tags[strlen(tags) - 1] = '\0';
+                            unsigned long cn;
+                            if (strlen(new_tag) >= strlen(tags)) {
+                                cn = strlen(tags);
+                            } else {
+                                cn = strlen(new_tag);
+                            }
+                            for (int i = 0; i < cn; i++) {
+                                if (tags[i] < new_tag[i]) {
+                                    fprintf(file2, "%s\n", tags);
+                                    break;
+                                } else if (tags[i] > new_tag[i]) {
+                                    flag = 1;
+                                    fprintf(file2, "%s\n", new_tag);
+                                    break;
+                                }
+                            }
+                        }
+                        if (flag == 1) {
+                            fprintf(file2, "%s\n", new_tag);
+                        }
+                        fclose(file);
+                        remove(".neogit/tags/tag_name");
+                        fclose(file2);
+                        rename(".neogit/tags/tag_name2", ".neogit/tags/tag_name");
+                    }
+
+                    //write in data
+                    file = fopen(".neogit/tags/tag_data", "r");
+                    char *tag_contant = (char *) malloc(10000 * sizeof(char));
+                    fgets(tag_contant, 10000, file);
+                    if (tag_contant[strlen(tag_contant) - 1] == '\n')
+                        tag_contant[strlen(tag_contant) - 1] = '\0';
+                    if (strcmp(tag_contant, "0") == 0) {
+                        fclose(file);
+                        file = fopen(".neogit/tags/tag_data", "w");
+                        fprintf(file, "%s ", new_tag);
+                        fprintf(file, "%s ", id);
+                        fprintf(file, "%s ", user_name);
+                        fprintf(file, "%s ", email);
+                        fprintf(file, "%s ", cur_time);
+                        fprintf(file, "%s\n", message);
+
+                    } else {
+                        fclose(file);
+                        file = fopen(".neogit/tags/tag_data", "a");
+                        fprintf(file, "%s ", new_tag);
+                        fprintf(file, "%s ", id);
+                        fprintf(file, "%s ", user_name);
+                        fprintf(file, "%s ", email);
+                        fprintf(file, "%s ", cur_time);
+                        fprintf(file, "%s\n", message);
+                    }
+                    fclose(file);
+                    return 0;
+                } else {
+                    file = fopen(".neogit/tags/tag_data", "r");
+                    char *tag_content = (char *) malloc(10000 * sizeof(char));
+                    FILE *file2 = fopen(".neogit/tags/tag_data2", "w");
+                    while (fgets(tag_content, 10000, file) != NULL) {
+                        if (tag_content[strlen(tag_content) - 1] == '\n')
+                            tag_content[strlen(tag_content) - 1] = '\0';
+                        char *toke = strtok(tag_content, " ");
+                        if (strcmp(toke, new_tag) == 0) {
+                            fprintf(file2, "%s ", new_tag);
+                            fprintf(file2, "%s ", id);
+                            fprintf(file2, "%s ", user_name);
+                            fprintf(file2, "%s ", email);
+                            fprintf(file2, "%s ", cur_time);
+                            fprintf(file2, "%s\n", message);
+                        } else {
+                            fprintf(file2, "%s\n", tag_content);
+                        }
+                    }
+                    fclose(file);
+                    remove(".neogit/tags/tag_data");
+                    fclose(file2);
+                    rename(".neogit/tags/tag_data2", ".neogit/tags/tag_data");
+                    return 0;
+                }
+            } else {
+                printf("invalid command\n");
+                return 1;
+            }
+
+            }
+
         }
-        else if (argc == 9) {}
-        else {
-            printf("invalid command\n");
-            return 1;
-        }
-    } else if (argc == 2) {}
-    else {
+    }
+    else if (argc == 2) {
+    } else {
         printf("invalid command\n");
         return 1;
     }
