@@ -2495,7 +2495,7 @@ int run_diff(int argc, char *const argv[]) {
 
         //find file2
         char *address2 = (char *) malloc(10000 * sizeof(char));
-        strcpy(address2, argv[3]);
+        strcpy(address2, argv[4]);
         FILE *file2 = fopen(address2, "r");
         if (file2 == NULL) {
             printf("file2 doesnt exist\n");
@@ -2529,34 +2529,46 @@ int run_diff(int argc, char *const argv[]) {
         fclose(file1);
         fclose(file2);
         //compare
+        int flag = 0;
         file1 = fopen(address1, "r");
         file2 = fopen(address2, "r");
         int counter_line1 = 0;
         int counter_line2 = 0;
         while (fgets(file1_content, 10000, file1) != NULL) {
+            flag = 0;
             while (isWhitespaceLine(file1_content) == 1) {
                 fgets(file1_content, 10000, file1);
                 if (file1_content == NULL)
+                {
+                    flag = 1;
                     break;
+                }
             }
+            if(flag == 1)
+                break;
             counter_line1++;
-            fgets(file2_content, 10000, file2);
+            if(fgets(file2_content, 10000, file2) == NULL)
+                break;
             while (isWhitespaceLine(file2_content) == 1) {
                 fgets(file2_content, 10000, file2);
-                if (file1_content == NULL)
+                if (file2_content == NULL) {
+                    flag = 2;
                     break;
+                }
             }
+            if(flag == 2)
+                break;
             counter_line2++;
             if (strcmp(file1_content, file2_content) != 0) {
                 printf("%s %d\n", address1, counter_line1);
-                printf("%s", file1_content);
+                printf(BLU "%s" Reset, file1_content);
                 printf("%s %d\n", address2, counter_line2);
-                printf("%s", file2_content);
+                printf(RED "%s" Reset, file2_content);
             }
         }
         fclose(file1);
         fclose(file2);
-
+        flag  = 0;
         file1 = fopen(address1, "r");
         file2 = fopen(address2, "r");
         if (line1 < line2) {
@@ -2581,7 +2593,7 @@ int run_diff(int argc, char *const argv[]) {
                     if (file2_content == NULL)
                         break;
                 }
-                printf("%s\n", file2_content);
+                printf(RED "%s" Reset, file2_content);
             }
         }
         if (line1 > line2) {
@@ -2591,11 +2603,12 @@ int run_diff(int argc, char *const argv[]) {
                     fgets(file2_content, 10000, file2);
                     if (file2_content == NULL)
                         break;
+
                 }
-                fgets(file2_content, 10000, file2);
+                fgets(file1_content, 10000, file1);
                 while (isWhitespaceLine(file1_content) == 1) {
-                    fgets(file2_content, 10000, file2);
-                    if (file2_content == NULL)
+                    fgets(file1_content, 10000, file1);
+                    if (file1_content == NULL)
                         break;
                 }
             }
@@ -2606,11 +2619,14 @@ int run_diff(int argc, char *const argv[]) {
                     if (file1_content == NULL)
                         break;
                 }
-                printf("%s\n", file1_content);
+                printf(BLU "%s" Reset, file1_content);
             }
         }
         return 0;
-    } else if (argc == 9) {}
+    } else if (argc == 9)
+    {
+        return 0;
+    }
     else {
         printf("invalid command\n");
         return 1;
