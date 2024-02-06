@@ -345,7 +345,6 @@ int creat_alias() {
     fprintf(file, "tag\n");
     fprintf(file, "grep\n");
     fprintf(file, "pre_commit\n");
-    //fprintf(file, "set\n");
     fclose(file);
 }
 
@@ -1097,37 +1096,10 @@ int run_reset(int argc, char *const argv[]) {
                 char command2[10000] = "";
                 sprintf(command2, "rm -r %s", stage);
                 system(command2);
-//            }
-//            int flag = 0;
-//            DIR *dir = opendir(last_unstaged_address);
-//            if (dir == NULL) {
-//                closedir(dir);
-//                FILE *file = fopen(last_unstaged_address, "r");
-//                flag = 1;
-//                if (file == NULL) {
-//                    printf("file or directory doesn't exist\n");
-//                    return 1;
-//                }
-//
-//                fclose(file);
-//            }
-//            printf("%d\n", flag);
-//            if (flag == 1) {
-//                char command[10000] = "";
-//                sprintf(command, "rsync -r %s %s", last_unstaged_address, ".neogit/staging");
-//                system(command);
-//                char command2[10000] = "";
-//                sprintf(command2, "rm -r %s", last_unstaged_address);
-//                system(command2);
-//                return 0;
-//            } else if (flag == 0) {
-//                char command[10000] = "";
-//                sprintf(command, "rsync -r %s %s", last_unstaged_address, ".neogit/staging");
-//                system(command);
-//                char command2[10000] = "";
-//                sprintf(command2, "rm -r %s", last_unstaged_address);
-//                system(command2);
             }
+            fclose(last_unstaged);
+            FILE *file = fopen(".neogit/last_address", "w");
+            fclose(file);
             return 0;
         }
         return 0;
