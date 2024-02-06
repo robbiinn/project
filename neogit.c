@@ -10,6 +10,17 @@
 #include <sys/types.h>
 #include <ctype.h>
 
+#define BLK "\e[0;30m"
+#define RED "\e[0;31m"
+#define GRN "\e[0;32m"
+#define YEL "\e[0;33m"
+#define BLU "\e[0;34m"
+#define MAG "\e[0;35m"
+#define CYN "\e[0;36m"
+#define WHT "\e[0;37m"
+#define Reset "\e[0m"
+
+
 //hint
 // line 1 = username
 // line 2 = email
@@ -35,6 +46,10 @@ int todo_check(char *file_name);
 int format_check(char *file_name);
 
 int character_limit(char *file_name);
+
+int balance_braces(char *file_name);
+
+int static_error_check(char *file_name , char * address);
 
 const char *true_command(char *command);
 
@@ -325,6 +340,7 @@ int creat_alias() {
     fprintf(file, "diff\n");
     fprintf(file, "tag\n");
     fprintf(file, "grep\n");
+    fprintf(file, "pre_commit\n");
     //fprintf(file, "set\n");
     fclose(file);
 }
@@ -400,6 +416,8 @@ int format_check(char *file_name) {
 }
 
 int character_limit(char *file_name) {
+    if ((strstr(file_name, ".c") == NULL) && (strstr(file_name, ".txt") == NULL))
+        return -1;
     FILE *file = fopen(file_name, "r");
     char *file_content = (char *) malloc(10000 * sizeof(char));
     fscanf(file, "%[^\r]s", file_content);
@@ -409,6 +427,49 @@ int character_limit(char *file_name) {
         return 1;
     return 0;
 }
+
+int balance_braces(char *file_name){
+    int parenthesis1 = 0;
+    int parenthesis2 = 0;
+    int brackets1 = 0;
+    int brackets2 = 0;
+    int square_brackets1 = 0;
+    int square_brackets2 = 0;
+    if ((strstr(file_name, ".c") == NULL) && (strstr(file_name, ".txt") == NULL))
+        return -1;
+    FILE *file = fopen(file_name, "r");
+    char *file_content = (char *) malloc(10000 * sizeof(char));
+    fscanf(file, "%[^\r]s", file_content);//?
+    for(int i = 0 ; i < strlen(file_content) ; i++)
+    {
+        if(file_content[i] == '(')
+            parenthesis1++;
+        if(file_content[i] == ')')
+            parenthesis2++;
+        if(file_content[i] == '{')
+            square_brackets1++;
+        if(file_content[i] == '}')
+            square_brackets2++;
+        if(file_content[i] == '[')
+            brackets1++;
+        if(file_content[i] == ']')
+            brackets2++;
+    }
+    if((parenthesis1 == parenthesis2) && (square_brackets1 == square_brackets2) && (brackets1 == brackets2))
+        return 0;
+    return 1;
+}
+
+int static_error_check(char *file_name , char * address){
+    if (strstr(file_name, ".c") == NULL)
+        return -1;
+    char command[1000];
+    snprintf(command,sizeof (command),"gcc %s -o exe",address);
+    if(system(command) == 0)
+        return 0;
+    return 1;
+}
+
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -1596,6 +1657,7 @@ int run_branch(int argc, char *const argv[]) {
         printf("invalid command\n");
         return 1;
     }
+    return 0;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -3830,13 +3892,12 @@ int run_pre_commit(int argc, char *const argv[]) {
         while ((entry = readdir(dir)) != NULL) {
             if (entry->d_type == DT_REG) {
                 strcpy(file_name, entry->d_name);
-                printf("%s:\n", file_name);
+
                 file = fopen(".neogit/hooks", "r");
                 char *hooksid = (char *) malloc(10000 * sizeof(char));
                 while (fgets(hooksid, 10000, file) != NULL) {
                     if (hooksid[strlen(hooksid) - 1] == '\n')
                         hooksid[strlen(hooksid) - 1] = '\0';
-                    printf("%s............................................................", hooksid);
                     long long int result = 0;
                     if(strcmp(hooksid , "todo-check") == 0)
                     {
@@ -3854,15 +3915,35 @@ int run_pre_commit(int argc, char *const argv[]) {
                     {
                         result = character_limit(file_name);
                     }
+                    else if(strcmp(hooksid , "balance_braces") == 0)
+                    {
+                        result = balance_braces(file_name);
+                    }
+                    else if(strcmp(hooksid , "static_error_check") == 0)
+                    {
+                        char * address = (char *) malloc(10000 * sizeof(char));
+                        getcwd(address , sizeof(address));
+                        strcat(address , "/staging");
+                        strcat(address , entry->d_name);
+                        result = static_error_check(file_name , address);
+                    }
                     else
                         continue;
-                    if(result == 0)
-                        printf("PASSED\n");
-                    if(result == 1)
-                        printf("FAILED\n");
-                    if(result == -1)
-                        printf("SKIPPED\n");
-
+                    if(result == 0) {
+                        printf(RED "%s:\n" Reset, file_name);
+                        printf(RED "%s............................................................" Reset, hooksid);
+                        printf(RED "PASSED\n" Reset);
+                    }
+                    if(result == 1) {
+                        printf(YEL"%s:\n" Reset, file_name);
+                        printf(YEL "%s............................................................" Reset, hooksid);
+                        printf(YEL "FAILED\n" Reset);
+                    }
+                    if(result == -1) {
+                        printf(BLU "%s:\n" Reset, file_name);
+                        printf(BLU "%s............................................................"Reset, hooksid);
+                        printf(BLU "SKIPPED\n" Reset);
+                    }
                 }
 
             }
