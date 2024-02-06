@@ -49,7 +49,7 @@ int character_limit(char *file_name);
 
 int balance_braces(char *file_name);
 
-int static_error_check(char *file_name , char * address);
+int static_error_check(char *file_name, char *address);
 
 const char *true_command(char *command);
 
@@ -384,7 +384,7 @@ int todo_check(char *file_name) {
             if (strstr(file_content, word) != NULL)
                 return 1;
         }
-            return 0;
+        return 0;
     }
     if (flag == 0) {
         FILE *file = fopen(file_name, "r");
@@ -428,7 +428,7 @@ int character_limit(char *file_name) {
     return 0;
 }
 
-int balance_braces(char *file_name){
+int balance_braces(char *file_name) {
     int parenthesis1 = 0;
     int parenthesis2 = 0;
     int brackets1 = 0;
@@ -440,32 +440,31 @@ int balance_braces(char *file_name){
     FILE *file = fopen(file_name, "r");
     char *file_content = (char *) malloc(10000 * sizeof(char));
     fscanf(file, "%[^\r]s", file_content);//?
-    for(int i = 0 ; i < strlen(file_content) ; i++)
-    {
-        if(file_content[i] == '(')
+    for (int i = 0; i < strlen(file_content); i++) {
+        if (file_content[i] == '(')
             parenthesis1++;
-        if(file_content[i] == ')')
+        if (file_content[i] == ')')
             parenthesis2++;
-        if(file_content[i] == '{')
+        if (file_content[i] == '{')
             square_brackets1++;
-        if(file_content[i] == '}')
+        if (file_content[i] == '}')
             square_brackets2++;
-        if(file_content[i] == '[')
+        if (file_content[i] == '[')
             brackets1++;
-        if(file_content[i] == ']')
+        if (file_content[i] == ']')
             brackets2++;
     }
-    if((parenthesis1 == parenthesis2) && (square_brackets1 == square_brackets2) && (brackets1 == brackets2))
+    if ((parenthesis1 == parenthesis2) && (square_brackets1 == square_brackets2) && (brackets1 == brackets2))
         return 0;
     return 1;
 }
 
-int static_error_check(char *file_name , char * address){
+int static_error_check(char *file_name, char *address) {
     if (strstr(file_name, ".c") == NULL)
         return -1;
     char command[1000];
-    snprintf(command,sizeof (command),"gcc %s -o exe",address);
-    if(system(command) == 0)
+    snprintf(command, sizeof(command), "gcc %s -o exe", address);
+    if (system(command) == 0)
         return 0;
     return 1;
 }
@@ -2479,73 +2478,144 @@ int run_remove(int argc, char *const argv[]) {
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-//int run_diff(int argc, char *const argv[]) {
-//    if (argc == 5) {
-//        if(strcmp(argv[2] , "-f") != 0)
-//        {
-//            printf("invalid command\n");
-//            return 1;
-//        }
-//        //find file 1
-//        char * address1 = (char*)malloc(10000 * sizeof(char));
-//        strcpy(address1 , argv[3]);
-//        FILE * file1 = fopen(address1 , "r");
-//        if(file1 == NULL)
-//        {
-//            printf("file1 doesnt exist\n");
-//            return 1;
-//        }
-//
-//        //find file2
-//        char * address2 = (char*)malloc(10000 * sizeof(char));
-//        strcpy(address2 , argv[3]);
-//        FILE * file2 = fopen(address2 , "r");
-//        if(file2 == NULL)
-//        {
-//            printf("file2 doesnt exist\n");
-//            return 1;
-//        }
-//
-//        //compare
-//        int line1 = 0;
-//        int line2 = 0;
-//        char * file1_content = (char*)malloc(10000 * sizeof(char));
-//        char * file2_content = (char*)malloc(10000 * sizeof(char));
-//        while(fgets(file1_content , 10000 , file1) != NULL){
-//            line1++;
-//            while(isWhitespaceLine(file1_content) == 1)
-//            {
-//                fgets(file1_content , 10000 , file1);
-//                if(file1_content == NULL)
-//                    break;
-//                line1++;
-//            }
-//            fgets(file2_content , 10000 , file2);
-//            line2++;
-//            while(isWhitespaceLine(file2_content) == 1)
-//            {
-//                fgets(file2_content , 10000 , file2);
-//                line2++;
-//            }
-//            char * token = strtok(file1 , " ");
-//            char * tok = strtok(file2 , " ");
-//            if(strcmp(token , tok) != 0)
-//            {
-//                printf("%s %d\n" , address1 , line1);
-//                printf("%s %d\n\n" , address2 , line2);
-//            }
-//        }
-//
-//
-//
-//
-//        return 0;
-//    } else if (argc == 9) {}
-//    else {
-//        printf("invalid command\n");
-//        return 1;
-//    }
-//}
+int run_diff(int argc, char *const argv[]) {
+    if (argc == 5) {
+        if (strcmp(argv[2], "-f") != 0) {
+            printf("invalid command\n");
+            return 1;
+        }
+        //find file 1
+        char *address1 = (char *) malloc(10000 * sizeof(char));
+        strcpy(address1, argv[3]);
+        FILE *file1 = fopen(address1, "r");
+        if (file1 == NULL) {
+            printf("file1 doesnt exist\n");
+            return 1;
+        }
+
+        //find file2
+        char *address2 = (char *) malloc(10000 * sizeof(char));
+        strcpy(address2, argv[3]);
+        FILE *file2 = fopen(address2, "r");
+        if (file2 == NULL) {
+            printf("file2 doesnt exist\n");
+            return 1;
+        }
+
+
+        //counter line
+        int line1 = 0;
+        int line2 = 0;
+        int min_line = 0;
+        int counter_line = 0;
+        char *file1_content = (char *) malloc(10000 * sizeof(char));
+        char *file2_content = (char *) malloc(10000 * sizeof(char));
+        while (fgets(file1_content, 10000, file1) != NULL) {
+            while (isWhitespaceLine(file1_content) == 1) {
+                fgets(file1_content, 10000, file1);
+                if (file1_content == NULL)
+                    break;
+            }
+            line1++;
+            while (fgets(file2_content, 10000, file2) != NULL) {
+                while (isWhitespaceLine(file2_content) == 1) {
+                    fgets(file2_content, 10000, file2);
+                    if (file1_content == NULL)
+                        break;
+                }
+                line2++;
+            }
+        }
+        fclose(file1);
+        fclose(file2);
+        //compare
+        file1 = fopen(address1, "r");
+        file2 = fopen(address2, "r");
+        int counter_line1 = 0;
+        int counter_line2 = 0;
+        while (fgets(file1_content, 10000, file1) != NULL) {
+            while (isWhitespaceLine(file1_content) == 1) {
+                fgets(file1_content, 10000, file1);
+                if (file1_content == NULL)
+                    break;
+            }
+            counter_line1++;
+            fgets(file2_content, 10000, file2);
+            while (isWhitespaceLine(file2_content) == 1) {
+                fgets(file2_content, 10000, file2);
+                if (file1_content == NULL)
+                    break;
+            }
+            counter_line2++;
+            if (strcmp(file1_content, file2_content) != 0) {
+                printf("%s %d\n", address1, counter_line1);
+                printf("%s", file1_content);
+                printf("%s %d\n", address2, counter_line2);
+                printf("%s", file2_content);
+            }
+        }
+        fclose(file1);
+        fclose(file2);
+
+        file1 = fopen(address1, "r");
+        file2 = fopen(address2, "r");
+        if (line1 < line2) {
+            while (fgets(file1_content, 10000, file1) != NULL) {
+
+                while (isWhitespaceLine(file1_content) == 1) {
+                    fgets(file1_content, 10000, file1);
+                    if (file1_content == NULL)
+                        break;
+                }
+                fgets(file2_content, 10000, file2);
+                while (isWhitespaceLine(file2_content) == 1) {
+                    fgets(file2_content, 10000, file2);
+                    if (file2_content == NULL)
+                        break;
+                }
+            }
+            printf("extra lines in %s\n", address2);
+            while (fgets(file2_content, 10000, file2) != NULL) {
+                while (isWhitespaceLine(file2_content) == 1) {
+                    fgets(file2_content, 10000, file2);
+                    if (file2_content == NULL)
+                        break;
+                }
+                printf("%s\n", file2_content);
+            }
+        }
+        if (line1 > line2) {
+            while (fgets(file2_content, 10000, file2) != NULL) {
+
+                while (isWhitespaceLine(file2_content) == 1) {
+                    fgets(file2_content, 10000, file2);
+                    if (file2_content == NULL)
+                        break;
+                }
+                fgets(file2_content, 10000, file2);
+                while (isWhitespaceLine(file1_content) == 1) {
+                    fgets(file2_content, 10000, file2);
+                    if (file2_content == NULL)
+                        break;
+                }
+            }
+            printf("extra lines in %s\n", address1);
+            while (fgets(file1_content, 10000, file1) != NULL) {
+                while (isWhitespaceLine(file1_content) == 1) {
+                    fgets(file1_content, 10000, file1);
+                    if (file1_content == NULL)
+                        break;
+                }
+                printf("%s\n", file1_content);
+            }
+        }
+        return 0;
+    } else if (argc == 9) {}
+    else {
+        printf("invalid command\n");
+        return 1;
+    }
+}
 
 /////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
@@ -3824,6 +3894,73 @@ int run_remove(int argc, char *const argv[]) {
 //    }
 
 int run_pre_commit(int argc, char *const argv[]) {
+    if (argc > 3) {
+        for (int i = 3; i < argc; i++) {
+            struct dirent *entry;
+            DIR *dir = opendir(".neogit/staging");
+            if (dir == NULL) {
+                perror("Error opening current directory");
+                return 1;
+            }
+            int flag = 0;
+            FILE *file;
+            char *file_name = (char *) malloc(10000 * sizeof(char));
+            while ((entry = readdir(dir)) != NULL) {
+                if (entry->d_type == DT_REG && (strcmp(entry->d_name , argv[i])) == 0) {
+                    flag = 1;
+                    strcpy(file_name, entry->d_name);
+
+                    file = fopen(".neogit/hooks", "r");
+                    char *hooksid = (char *) malloc(10000 * sizeof(char));
+                    while (fgets(hooksid, 10000, file) != NULL) {
+                        if (hooksid[strlen(hooksid) - 1] == '\n')
+                            hooksid[strlen(hooksid) - 1] = '\0';
+                        long long int result = 0;
+                        if (strcmp(hooksid, "todo-check") == 0) {
+                            result = todo_check(file_name);
+                        } else if (strcmp(hooksid, "file-size-check") == 0) {
+                            result = get_size(file_name);
+                        } else if (strcmp(hooksid, "format-check") == 0) {
+                            result = format_check(file_name);
+                        } else if (strcmp(hooksid, "todo-check") == 0) {
+                            result = character_limit(file_name);
+                        } else if (strcmp(hooksid, "balance_braces") == 0) {
+                            result = balance_braces(file_name);
+                        } else if (strcmp(hooksid, "static_error_check") == 0) {
+                            char *address = (char *) malloc(10000 * sizeof(char));
+                            getcwd(address, sizeof(address));
+                            strcat(address, "/staging");
+                            strcat(address, entry->d_name);
+                            result = static_error_check(file_name, address);
+                        } else
+                            continue;
+                        if (result == 0) {
+                            printf(RED "%s:\n" Reset, file_name);
+                            printf(RED "%s............................................................" Reset, hooksid);
+                            printf(RED "PASSED\n" Reset);
+                        }
+                        if (result == 1) {
+                            printf(YEL"%s:\n" Reset, file_name);
+                            printf(YEL "%s............................................................" Reset, hooksid);
+                            printf(YEL "FAILED\n" Reset);
+                        }
+                        if (result == -1) {
+                            printf(BLU "%s:\n" Reset, file_name);
+                            printf(BLU "%s............................................................"Reset, hooksid);
+                            printf(BLU "SKIPPED\n" Reset);
+                        }
+                    }
+
+                }
+            }
+            closedir(dir);
+            if(flag == 0)
+            {
+                printf("file %d doesnt exist\n" , i - 2);
+                return 1;
+            }
+        }
+    }
     if (argc == 4) {
         if ((strcmp(argv[2], "hooks") == 0) && (strcmp(argv[3], "lists") == 0)) {
             printf("todo-check\n");
@@ -3899,47 +4036,35 @@ int run_pre_commit(int argc, char *const argv[]) {
                     if (hooksid[strlen(hooksid) - 1] == '\n')
                         hooksid[strlen(hooksid) - 1] = '\0';
                     long long int result = 0;
-                    if(strcmp(hooksid , "todo-check") == 0)
-                    {
+                    if (strcmp(hooksid, "todo-check") == 0) {
                         result = todo_check(file_name);
-                    }
-                    else if(strcmp(hooksid , "file-size-check") == 0)
-                    {
+                    } else if (strcmp(hooksid, "file-size-check") == 0) {
                         result = get_size(file_name);
-                    }
-                    else if(strcmp(hooksid , "format-check") == 0)
-                    {
+                    } else if (strcmp(hooksid, "format-check") == 0) {
                         result = format_check(file_name);
-                    }
-                    else if(strcmp(hooksid , "todo-check") == 0)
-                    {
+                    } else if (strcmp(hooksid, "todo-check") == 0) {
                         result = character_limit(file_name);
-                    }
-                    else if(strcmp(hooksid , "balance_braces") == 0)
-                    {
+                    } else if (strcmp(hooksid, "balance_braces") == 0) {
                         result = balance_braces(file_name);
-                    }
-                    else if(strcmp(hooksid , "static_error_check") == 0)
-                    {
-                        char * address = (char *) malloc(10000 * sizeof(char));
-                        getcwd(address , sizeof(address));
-                        strcat(address , "/staging");
-                        strcat(address , entry->d_name);
-                        result = static_error_check(file_name , address);
-                    }
-                    else
+                    } else if (strcmp(hooksid, "static_error_check") == 0) {
+                        char *address = (char *) malloc(10000 * sizeof(char));
+                        getcwd(address, sizeof(address));
+                        strcat(address, "/staging");
+                        strcat(address, entry->d_name);
+                        result = static_error_check(file_name, address);
+                    } else
                         continue;
-                    if(result == 0) {
+                    if (result == 0) {
                         printf(RED "%s:\n" Reset, file_name);
                         printf(RED "%s............................................................" Reset, hooksid);
                         printf(RED "PASSED\n" Reset);
                     }
-                    if(result == 1) {
+                    if (result == 1) {
                         printf(YEL"%s:\n" Reset, file_name);
                         printf(YEL "%s............................................................" Reset, hooksid);
                         printf(YEL "FAILED\n" Reset);
                     }
-                    if(result == -1) {
+                    if (result == -1) {
                         printf(BLU "%s:\n" Reset, file_name);
                         printf(BLU "%s............................................................"Reset, hooksid);
                         printf(BLU "SKIPPED\n" Reset);
