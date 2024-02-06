@@ -73,12 +73,12 @@ int run_replace(int argc, char *const argv[]);
 
 int run_remove(int argc, char *const argv[]);
 
-//int run_diff(int argc, char *const argv[]);
-//
-//int run_tag(int argc, char *const argv[]);
-//
-//int run_grep(int argc, char *const argv[]);
-//
+int run_diff(int argc, char *const argv[]);
+
+int run_tag(int argc, char *const argv[]);
+
+int run_grep(int argc, char *const argv[]);
+
 int run_pre_commit(int argc, char *const argv[]);
 
 //void copy_dir(char *address, char *full_address);
@@ -3894,7 +3894,7 @@ int run_grep(int argc, char *const argv[]) {
     }
 
 int run_pre_commit(int argc, char *const argv[]) {
-    if (argc > 3) {
+    if (argc > 3 && strcmp(argv[2] , "-f") == 0) {
         for (int i = 3; i < argc; i++) {
             struct dirent *entry;
             DIR *dir = opendir(".neogit/staging");
@@ -3957,12 +3957,12 @@ int run_pre_commit(int argc, char *const argv[]) {
             if(flag == 0)
             {
                 printf("file %d doesnt exist\n" , i - 2);
-                return 1;
             }
         }
+        return 0;
     }
     if (argc == 4) {
-        if ((strcmp(argv[2], "hooks") == 0) && (strcmp(argv[3], "lists") == 0)) {
+        if ((strcmp(argv[2], "hooks") == 0) && (strcmp(argv[3], "list") == 0)) {
             printf("todo-check\n");
             printf("eof-blank-space\n");
             printf("format-check\n");
@@ -3972,9 +3972,10 @@ int run_pre_commit(int argc, char *const argv[]) {
             printf("file-size-check\n");
             printf("character-limit\n");
             printf("time-limit\n");
+            return 0;
 
         }
-        if ((strcmp(argv[2], "applied") == 0) && (strcmp(argv[2], "hooks") == 0)) {
+        if ((strcmp(argv[2], "applied") == 0) && (strcmp(argv[3], "hooks") == 0)) {
             FILE *file = fopen(".neogit/hooks", "r");
             char *hooksid = (char *) malloc(10000 * sizeof(char));
             while (fgets(hooksid, 10000, file) != NULL) {
@@ -3982,19 +3983,20 @@ int run_pre_commit(int argc, char *const argv[]) {
                     hooksid[strlen(hooksid) - 1] = '\0';
                 printf("%s\n", hooksid);
             }
+            return 0;
         } else {
             printf("invalid command\n");
             return 1;
         }
     }
     if (argc == 5) {
-        if ((strcmp(argv[2], "add") == 0) && (strcmp(argv[2], "hook") == 0)) {
+        if ((strcmp(argv[2], "add") == 0) && (strcmp(argv[3], "hook") == 0)) {
             FILE *file = fopen(".neogit/hooks", "a");
             fprintf(file, "%s\n", argv[4]);
             fclose(file);
-
+            return 0;
         }
-        if ((strcmp(argv[2], "remove") == 0) && (strcmp(argv[2], "hook") == 0)) {
+        if ((strcmp(argv[2], "remove") == 0) && (strcmp(argv[3], "hook") == 0)) {
             FILE *file = fopen(".neogit/hooks", "r");
             FILE *file2 = fopen(".neogit/hooks2", "w");
             char *hooksid = (char *) malloc(10000 * sizeof(char));
@@ -4002,18 +4004,21 @@ int run_pre_commit(int argc, char *const argv[]) {
                 if (hooksid[strlen(hooksid) - 1] == '\n')
                     hooksid[strlen(hooksid) - 1] = '\0';
                 if (strcmp(hooksid, argv[4]) == 0) {
-                    if ((fgets(hooksid, 10000, file) != NULL)) {
+                    if ((fgets(hooksid, 10000, file) == NULL)) {
                         break;
                     }
-                    fprintf(file2, "%s\n", hooksid);
+                    if (hooksid[strlen(hooksid) - 1] == '\n')
+                        hooksid[strlen(hooksid) - 1] = '\0';
                 }
+                fprintf(file2, "%s\n", hooksid);
             }
             fclose(file);
             remove(".neogit/hooks");
             fclose(file2);
             rename(".neogit/hooks2", ".neogit/hooks");
+            return 0;
         } else {
-            printf("invalid command\n");
+            printf("invalid1 command\n");
             return 1;
         }
     }
@@ -4044,9 +4049,9 @@ int run_pre_commit(int argc, char *const argv[]) {
                         result = format_check(file_name);
                     } else if (strcmp(hooksid, "todo-check") == 0) {
                         result = character_limit(file_name);
-                    } else if (strcmp(hooksid, "balance_braces") == 0) {
+                    } else if (strcmp(hooksid, "balance-braces") == 0) {
                         result = balance_braces(file_name);
-                    } else if (strcmp(hooksid, "static_error_check") == 0) {
+                    } else if (strcmp(hooksid, "static-error-check") == 0) {
                         char *address = (char *) malloc(10000 * sizeof(char));
                         getcwd(address, sizeof(address));
                         strcat(address, "/staging");
@@ -4075,7 +4080,7 @@ int run_pre_commit(int argc, char *const argv[]) {
         }
         closedir(dir);
     } else {
-        printf("invalid command\n");
+        printf("invalid2 command\n");
         return 1;
     }
 
@@ -4099,16 +4104,12 @@ int main(int argc, char *argv[]) {
     }
     if ((strcmp(true_command(argv[1]), "config") == 0) || (strcmp(argv[1], "config") == 0)) {
         return run_config(argc, argv);
-        printf("1\n");
     } else if ((strcmp(argv[1], "add") == 0) || (strcmp(true_command(argv[1]), "add") == 0)) {
         return run_add(argc, argv);
-        printf("1\n");
     } else if ((strcmp(argv[1], "reset") == 0) || (strcmp(true_command(argv[1]), "reset") == 0)) {
         return run_reset(argc, argv);
-        printf("1\n");
     } else if ((strcmp(argv[1], "commit") == 0) || (strcmp(true_command(argv[1]), "commit") == 0)) {
         return run_commit(argc, argv);
-        printf("1\n");
     } else if ((strcmp(argv[1], "log") == 0) || (strcmp(true_command(argv[1]), "log") == 0)) {
         return run_log(argc, argv);
     } else if ((strcmp(argv[1], "branch") == 0) || (strcmp(true_command(argv[1]), "branch") == 0)) {
@@ -4124,6 +4125,7 @@ int main(int argc, char *argv[]) {
     } else if ((strcmp(argv[1], "remove") == 0) || (strcmp(true_command(argv[1]), "remove") == 0)) {
         return run_remove(argc, argv);
     } else if ((strcmp(argv[1], "pre_commit") == 0) || (strcmp(true_command(argv[1]), "pre_commit") == 0)) {
+        //printf("1\n");
         return run_pre_commit(argc, argv);
     }else if ((strcmp(argv[1], "diff") == 0) || (strcmp(true_command(argv[1]), "diff") == 0)) {
         return run_diff(argc, argv);
@@ -4132,8 +4134,8 @@ int main(int argc, char *argv[]) {
     } else if ((strcmp(argv[1], "grep") == 0) || (strcmp(true_command(argv[1]), "grep") == 0)) {
             return run_grep(argc, argv);
     } else {
-    printf("invalid command\n");
-    //}
+        printf("invalid command\n");
+    }
 
     return 0;
 }
