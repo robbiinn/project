@@ -2501,6 +2501,7 @@ int run_tag(int argc, char *const argv[]) {
                         rename(".neogit/tags/tag_name2", ".neogit/tags/tag_name");
                     }
 
+
                     //write in data
                     file = fopen(".neogit/tags/tag_data", "r");
                     char *tag_contant = (char *) malloc(10000 * sizeof(char));
