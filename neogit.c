@@ -3717,7 +3717,7 @@ int run_grep(int argc, char *const argv[]) {
             strcpy(address, argv[3]);
             FILE *file = fopen(address, "r");
             if (file == NULL) {
-                printf("file1 doesnt exist\n");
+                printf("file doesnt exist\n");
                 return 1;
             }
             fclose(file);
@@ -3729,7 +3729,7 @@ int run_grep(int argc, char *const argv[]) {
             while (fgets(file_content, 10000, file) != NULL) {
                 if (file_content[strlen(file_content) - 1] == '\n')
                     file_content[strlen(file_content) - 1] = '\0';
-                if (strstr(word, file_content) != NULL) {
+                if (strstr(file_content, word) != NULL) {
                     printf("%s\n", file_content);
                 }
             }
@@ -3739,7 +3739,7 @@ int run_grep(int argc, char *const argv[]) {
             printf("invalid command\n");
             return 1;
         }
-
+        return 0;
     }
     if (argc == 7) {
         if ((strcmp(argv[2], "-f") == 0) && (strcmp(argv[4], "-p") == 0) && (strcmp(argv[6], "-n") == 0)) {
@@ -3763,7 +3763,7 @@ int run_grep(int argc, char *const argv[]) {
                     if (file_content[strlen(file_content) - 1] == '\n')
                         file_content[strlen(file_content) - 1] = '\0';
                     counter++;
-                    if (strstr(word, file_content) != NULL) {
+                    if (strstr(file_content, word) != NULL) {
                         printf("%s\n", file_content);
                         printf("line num = %d\n", counter);
                     }
@@ -3774,127 +3774,136 @@ int run_grep(int argc, char *const argv[]) {
                 printf("invalid command\n");
                 return 1;
             }
+            return 0;
+        } else {
+            printf("invalid command\n");
+            return 1;
         }
+
     }
-        if (argc == 8) {
-            if ((strcmp(argv[2], "-f") == 0) && (strcmp(argv[4], "-p") == 0) && (strcmp(argv[6], "-c") == 0)) {
+    if (argc == 8) {
+        if ((strcmp(argv[2], "-f") == 0) && (strcmp(argv[4], "-p") == 0) && (strcmp(argv[6], "-c") == 0)) {
 
 
-                //commit id
-                char *id = (char *) malloc(10000 * sizeof(char));
-                strcpy(id, argv[7]);
+            //commit id
+            char *id = (char *) malloc(10000 * sizeof(char));
+            strcpy(id, argv[7]);
 
-                FILE *file2 = fopen(".neogit/commits_addressandid", "r");
-                char *commit_info = (char *) malloc(10000 * sizeof(char));
-                char *commit_add = (char *) malloc(10000 * sizeof(char));
-                while (fgets(commit_info, 10000, file2) != NULL) {
-                    if (commit_info[strlen(commit_info) - 1] == '\n')
-                        commit_info[strlen(commit_info) - 1] = '\0';
-                    char *token = strtok(commit_info, " ");
-                    if (strcmp(token, id) == 0) {
-                        token = (NULL, " ");
-                        strcpy(commit_add, token);
-                    }
+            FILE *file2 = fopen(".neogit/commits_addressandid", "r");
+            char *commit_info = (char *) malloc(10000 * sizeof(char));
+            char *commit_add = (char *) malloc(10000 * sizeof(char));
+            while (fgets(commit_info, 10000, file2) != NULL) {
+                if (commit_info[strlen(commit_info) - 1] == '\n')
+                    commit_info[strlen(commit_info) - 1] = '\0';
+                char *token = strtok(commit_info, " ");
+                if (strcmp(token, id) == 0) {
+                    token = strtok(NULL, " ");
+                    strcpy(commit_add, token);
+                    break;
                 }
-                fclose(file2);
+            }
+            fclose(file2);
 
-                //search file
-                char *address = (char *) malloc(10000 * sizeof(char));
-                strcpy(address, commit_add);
-                strcat(address, "/");
-                strcat(address, argv[3]);
-                FILE *file = fopen(address, "r");
-                if (file == NULL) {
-                    printf("file1 doesnt exist\n");
-                    return 1;
-                }
-                fclose(file);
-
-                //word
-                char *word = (char *) malloc(10000 * sizeof(char));
-                strcpy(word, argv[5]);
-
-                int counter = 0;
-                file = fopen(address, "r");
-                char *file_content = (char *) malloc(10000 * sizeof(char));
-                while (fgets(file_content, 10000, file) != NULL) {
-                    if (file_content[strlen(file_content) - 1] == '\n')
-                        file_content[strlen(file_content) - 1] = '\0';
-                    //counter++;
-                    if (strstr(word, file_content) != NULL) {
-                        printf("%s\n", file_content);
-                        //printf("line num = %d\n" , counter);
-                    }
-                }
-                fclose(file);
-            } else {
-                printf("invalid command\n");
+            //search file
+            char *address = (char *) malloc(10000 * sizeof(char));
+            strcpy(address, commit_add);
+            strcat(address, "/");
+            strcat(address, argv[3]);
+            FILE *file = fopen(address, "r");
+            if (file == NULL) {
+                printf("file doesnt exist\n");
                 return 1;
             }
-        }
-        if (argc == 9) {
-            if ((strcmp(argv[2], "-f") == 0) && (strcmp(argv[4], "-p") == 0) && (strcmp(argv[6], "-c") == 0) && (strcmp(argv[8], "-n") == 0)) {
+            fclose(file);
 
-                //commit id
-                char *id = (char *) malloc(10000 * sizeof(char));
-                strcpy(id, argv[7]);
+            //word
+            char *word = (char *) malloc(10000 * sizeof(char));
+            strcpy(word, argv[5]);
 
-                FILE *file2 = fopen(".neogit/commits_addressandid", "r");
-                char *commit_info = (char *) malloc(10000 * sizeof(char));
-                char *commit_add = (char *) malloc(10000 * sizeof(char));
-                while (fgets(commit_info, 10000, file2) != NULL) {
-                    if (commit_info[strlen(commit_info) - 1] == '\n')
-                        commit_info[strlen(commit_info) - 1] = '\0';
-                    char *token = strtok(commit_info, " ");
-                    if (strcmp(token, id) == 0) {
-                        token = (NULL, " ");
-                        strcpy(commit_add, token);
-                    }
+            int counter = 0;
+            file = fopen(address, "r");
+            char *file_content = (char *) malloc(10000 * sizeof(char));
+            while (fgets(file_content, 10000, file) != NULL) {
+                if (file_content[strlen(file_content) - 1] == '\n')
+                    file_content[strlen(file_content) - 1] = '\0';
+                //counter++;
+                if (strstr(file_content, word) != NULL) {
+                    printf("%s\n", file_content);
+                    //printf("line num = %d\n" , counter);
                 }
-                fclose(file2);
-
-                //search file
-                char *address = (char *) malloc(10000 * sizeof(char));
-                strcpy(address, commit_add);
-                strcat(address, "/");
-                strcat(address, argv[3]);
-                FILE *file = fopen(address, "r");
-                if (file == NULL) {
-                    printf("file1 doesnt exist\n");
-                    return 1;
-                }
-                fclose(file);
-
-                //word
-                char *word = (char *) malloc(10000 * sizeof(char));
-                strcpy(word, argv[5]);
-
-                int counter = 0;
-                file = fopen(address, "r");
-                char *file_content = (char *) malloc(10000 * sizeof(char));
-                while (fgets(file_content, 10000, file) != NULL) {
-                    if (file_content[strlen(file_content) - 1] == '\n')
-                        file_content[strlen(file_content) - 1] = '\0';
-                    counter++;
-                    if (strstr(word, file_content) != NULL) {
-                        printf("%s\n", file_content);
-                        printf("line num = %d\n" , counter);
-                    }
-                }
-                fclose(file);
-            } else {
-                printf("invalid command\n");
-                return 1;
             }
+            fclose(file);
         } else {
             printf("invalid command\n");
             return 1;
         }
         return 0;
     }
+    if (argc == 9) {
+        if ((strcmp(argv[2], "-f") == 0) && (strcmp(argv[4], "-p") == 0) && (strcmp(argv[6], "-c") == 0) &&
+            (strcmp(argv[8], "-n") == 0)) {
+
+            //commit id
+            char *id = (char *) malloc(10000 * sizeof(char));
+            strcpy(id, argv[7]);
+
+            FILE *file2 = fopen(".neogit/commits_addressandid", "r");
+            char *commit_info = (char *) malloc(10000 * sizeof(char));
+            char *commit_add = (char *) malloc(10000 * sizeof(char));
+            while (fgets(commit_info, 10000, file2) != NULL) {
+                if (commit_info[strlen(commit_info) - 1] == '\n')
+                    commit_info[strlen(commit_info) - 1] = '\0';
+                char *token = strtok(commit_info, " ");
+                if (strcmp(token, id) == 0) {
+                    token = strtok(NULL, " ");
+                    strcpy(commit_add, token);
+                }
+            }
+            fclose(file2);
+
+            //search file
+            char *address = (char *) malloc(10000 * sizeof(char));
+            strcpy(address, commit_add);
+            strcat(address, "/");
+            strcat(address, argv[3]);
+            FILE *file = fopen(address, "r");
+            if (file == NULL) {
+                printf("file1 doesnt exist\n");
+                return 1;
+            }
+            fclose(file);
+
+            //word
+            char *word = (char *) malloc(10000 * sizeof(char));
+            strcpy(word, argv[5]);
+
+            int counter = 0;
+            file = fopen(address, "r");
+            char *file_content = (char *) malloc(10000 * sizeof(char));
+            while (fgets(file_content, 10000, file) != NULL) {
+                if (file_content[strlen(file_content) - 1] == '\n')
+                    file_content[strlen(file_content) - 1] = '\0';
+                counter++;
+                if (strstr(file_content, word) != NULL) {
+                    printf("%s\n", file_content);
+                    printf("line num = %d\n", counter);
+                }
+            }
+            fclose(file);
+        } else {
+            printf("invalid command\n");
+            return 1;
+        }
+        return 0;
+    } else {
+        printf("invalid command\n");
+        return 1;
+    }
+    return 0;
+}
 
 int run_pre_commit(int argc, char *const argv[]) {
-    if (argc > 3 && strcmp(argv[2] , "-f") == 0) {
+    if (argc > 3 && strcmp(argv[2], "-f") == 0) {
         for (int i = 3; i < argc; i++) {
             struct dirent *entry;
             DIR *dir = opendir(".neogit/staging");
@@ -3906,7 +3915,7 @@ int run_pre_commit(int argc, char *const argv[]) {
             FILE *file;
             char *file_name = (char *) malloc(10000 * sizeof(char));
             while ((entry = readdir(dir)) != NULL) {
-                if (entry->d_type == DT_REG && (strcmp(entry->d_name , argv[i])) == 0) {
+                if (entry->d_type == DT_REG && (strcmp(entry->d_name, argv[i])) == 0) {
                     flag = 1;
                     strcpy(file_name, entry->d_name);
 
@@ -3954,9 +3963,8 @@ int run_pre_commit(int argc, char *const argv[]) {
                 }
             }
             closedir(dir);
-            if(flag == 0)
-            {
-                printf("file %d doesnt exist\n" , i - 2);
+            if (flag == 0) {
+                printf("file %d doesnt exist\n", i - 2);
             }
         }
         return 0;
@@ -4127,12 +4135,12 @@ int main(int argc, char *argv[]) {
     } else if ((strcmp(argv[1], "pre_commit") == 0) || (strcmp(true_command(argv[1]), "pre_commit") == 0)) {
         //printf("1\n");
         return run_pre_commit(argc, argv);
-    }else if ((strcmp(argv[1], "diff") == 0) || (strcmp(true_command(argv[1]), "diff") == 0)) {
+    } else if ((strcmp(argv[1], "diff") == 0) || (strcmp(true_command(argv[1]), "diff") == 0)) {
         return run_diff(argc, argv);
-    }else if ((strcmp(argv[1], "tag") == 0) || (strcmp(true_command(argv[1]), "tag") == 0)) {
-            return run_tag(argc, argv);
+    } else if ((strcmp(argv[1], "tag") == 0) || (strcmp(true_command(argv[1]), "tag") == 0)) {
+        return run_tag(argc, argv);
     } else if ((strcmp(argv[1], "grep") == 0) || (strcmp(true_command(argv[1]), "grep") == 0)) {
-            return run_grep(argc, argv);
+        return run_grep(argc, argv);
     } else {
         printf("invalid command\n");
     }
