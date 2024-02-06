@@ -50,9 +50,11 @@ int run_replace(int argc, char *const argv[]);
 
 int run_remove(int argc, char *const argv[]);
 
-int run_diff(int argc, char *const argv[]);
+//int run_diff(int argc, char *const argv[]);
 
 int run_tag(int argc, char *const argv[]);
+
+int run_grep(int argc, char *const argv[]);
 
 void copy_dir(char *address, char *full_address);
 
@@ -306,6 +308,8 @@ int creat_alias() {
     fprintf(file, "replace\n");
     fprintf(file, "remove\n");
     fprintf(file, "diff\n");
+    fprintf(file, "tag\n");
+    fprintf(file, "grep\n");
     //fprintf(file, "set\n");
     fclose(file);
 }
@@ -2388,7 +2392,7 @@ int run_tag(int argc, char *const argv[]) {
                     fprintf(file, "%s ", user_name);
                     fprintf(file, "%s ", email);
                     fprintf(file, "%s ", cur_time);
-                    fprintf(file, "%s\n", "0");
+                    fprintf(file, " \n");
                     return 0;
                 } else {
                     fclose(file);
@@ -2398,12 +2402,22 @@ int run_tag(int argc, char *const argv[]) {
                     fprintf(file, "%s ", user_name);
                     fprintf(file, "%s ", email);
                     fprintf(file, "%s ", cur_time);
-                    fprintf(file, "%s\n", "0");
+                    fprintf(file, " \n");
                     return 0;
                 }
 
-            } else if (strcmp(argv[2], "show") == 0) {}
-            else {
+            } else if (strcmp(argv[2], "show") == 0) {
+                FILE *file = fopen(".neogit/tags/tag_data", "r");
+                char *tag_data = (char *) malloc(10000 * sizeof(char));
+                while (fgets(tag_data, 10000, file) != NULL) {
+                    if (tag_data[strlen(tag_data) - 1] == '\n')
+                        tag_data[strlen(tag_data) - 1] = '\0';
+                    printf("%s\n", tag_data);
+                }
+                fclose(file);
+                return 0;
+
+            } else {
                 printf("invalid command\n");
                 return 1;
             }
@@ -2516,7 +2530,7 @@ int run_tag(int argc, char *const argv[]) {
                         fprintf(file, "%s ", user_name);
                         fprintf(file, "%s ", email);
                         fprintf(file, "%s ", cur_time);
-                        fprintf(file, "%s\n", "0");
+                        fprintf(file, " \n");
                         return 0;
                     } else {
                         fclose(file);
@@ -2526,7 +2540,7 @@ int run_tag(int argc, char *const argv[]) {
                         fprintf(file, "%s ", user_name);
                         fprintf(file, "%s ", email);
                         fprintf(file, "%s ", cur_time);
-                        fprintf(file, "%s\n", "0");
+                        fprintf(file, "\n");
                         return 0;
                     }
                 }
@@ -2757,7 +2771,7 @@ int run_tag(int argc, char *const argv[]) {
                         fprintf(file, "%s ", user_name);
                         fprintf(file, "%s ", email);
                         fprintf(file, "%s ", cur_time);
-                        fprintf(file, "%s\n", "0");
+                        fprintf(file, " \n");
                         return 0;
                     } else {
                         fclose(file);
@@ -2767,7 +2781,7 @@ int run_tag(int argc, char *const argv[]) {
                         fprintf(file, "%s ", user_name);
                         fprintf(file, "%s ", email);
                         fprintf(file, "%s ", cur_time);
-                        fprintf(file, "%s\n", "0");
+                        fprintf(file, " \n");
                         return 0;
                     }
 
@@ -3027,7 +3041,7 @@ int run_tag(int argc, char *const argv[]) {
                             fprintf(file, "%s ", user_name);
                             fprintf(file, "%s ", email);
                             fprintf(file, "%s ", cur_time);
-                            fprintf(file, "%s\n", "0");
+                            fprintf(file, " \n");
 
                         } else {
                             fclose(file);
@@ -3037,7 +3051,7 @@ int run_tag(int argc, char *const argv[]) {
                             fprintf(file, "%s ", user_name);
                             fprintf(file, "%s ", email);
                             fprintf(file, "%s ", cur_time);
-                            fprintf(file, "%s\n", "0");
+                            fprintf(file, " \n");
                         }
                         fclose(file);
                         return 0;
@@ -3195,7 +3209,7 @@ int run_tag(int argc, char *const argv[]) {
                 printf("invalid command\n");
                 return 1;
             }
-        }  else if (argc == 9) {
+        } else if (argc == 9) {
             if ((strcmp(argv[4], "-m") == 0) && (strcmp(argv[6], "-c") == 0) && (strcmp(argv[8], "-f") == 0)) {
                 //new tag
                 char *new_tag = (char *) malloc(10000 * sizeof(char));
@@ -3342,66 +3356,261 @@ int run_tag(int argc, char *const argv[]) {
                 return 1;
             }
 
-            }
+        }
 
+    } else if (argc == 2) {
+        FILE *file = fopen(".neogit/tags/tag_name", "r");
+        char *tags = (char *) malloc(10000 * sizeof(char));
+        while (fgets(tags, 10000, file)) {
+            if (tags[strlen(tags) - 1] == '\n')
+                tags[strlen(tags) - 1] = '\0';
+            printf("%s\n", tags);
+        }
+        fclose(file);
+        return 0;
+    } else {
+        printf("invalid command\n");
+        return 1;
+    }
+    return 0;
+}
+
+int run_grep(int argc, char *const argv[]) {
+    if (argc == 6) {
+        if ((strcmp(argv[2], "-f") == 0) && (strcmp(argv[4], "-p") == 0)) {
+            //search file
+            char *address = (char *) malloc(10000 * sizeof(char));
+            strcpy(address, argv[3]);
+            FILE *file = fopen(address, "r");
+            if (file == NULL) {
+                printf("file1 doesnt exist\n");
+                return 1;
+            }
+            fclose(file);
+
+            char *word = (char *) malloc(10000 * sizeof(char));
+            strcpy(word, argv[5]);
+            file = fopen(address, "r");
+            char *file_content = (char *) malloc(10000 * sizeof(char));
+            while (fgets(file_content, 10000, file) != NULL) {
+                if (file_content[strlen(file_content) - 1] == '\n')
+                    file_content[strlen(file_content) - 1] = '\0';
+                if (strstr(word, file_content) != NULL) {
+                    printf("%s\n", file_content);
+                }
+            }
+            fclose(file);
+
+        } else {
+            printf("invalid command\n");
+            return 1;
+        }
+
+    }
+    if (argc == 7) {
+        if ((strcmp(argv[2], "-f") == 0) && (strcmp(argv[4], "-p") == 0) && (strcmp(argv[6], "-n") == 0)) {
+            if ((strcmp(argv[2], "-f") == 0) && (strcmp(argv[4], "-p") == 0)) {
+                //search file
+                char *address = (char *) malloc(10000 * sizeof(char));
+                strcpy(address, argv[3]);
+                FILE *file = fopen(address, "r");
+                if (file == NULL) {
+                    printf("file1 doesnt exist\n");
+                    return 1;
+                }
+                fclose(file);
+
+                int counter = 0;
+                char *word = (char *) malloc(10000 * sizeof(char));
+                strcpy(word, argv[5]);
+                file = fopen(address, "r");
+                char *file_content = (char *) malloc(10000 * sizeof(char));
+                while (fgets(file_content, 10000, file) != NULL) {
+                    if (file_content[strlen(file_content) - 1] == '\n')
+                        file_content[strlen(file_content) - 1] = '\0';
+                    counter++;
+                    if (strstr(word, file_content) != NULL) {
+                        printf("%s\n", file_content);
+                        printf("line num = %d\n", counter);
+                    }
+                }
+                fclose(file);
+
+            } else {
+                printf("invalid command\n");
+                return 1;
+            }
         }
     }
-    else if (argc == 2) {
-    } else {
-        printf("invalid command\n");
-        return 1;
+        if (argc == 8) {
+            if ((strcmp(argv[2], "-f") == 0) && (strcmp(argv[4], "-p") == 0) && (strcmp(argv[6], "-c") == 0)) {
+
+
+                //commit id
+                char *id = (char *) malloc(10000 * sizeof(char));
+                strcpy(id, argv[7]);
+
+                FILE *file2 = fopen(".neogit/commits_addressandid", "r");
+                char *commit_info = (char *) malloc(10000 * sizeof(char));
+                char *commit_add = (char *) malloc(10000 * sizeof(char));
+                while (fgets(commit_info, 10000, file2) != NULL) {
+                    if (commit_info[strlen(commit_info) - 1] == '\n')
+                        commit_info[strlen(commit_info) - 1] = '\0';
+                    char *token = strtok(commit_info, " ");
+                    if (strcmp(token, id) == 0) {
+                        token = (NULL, " ");
+                        strcpy(commit_add, token);
+                    }
+                }
+                fclose(file2);
+
+                //search file
+                char *address = (char *) malloc(10000 * sizeof(char));
+                strcpy(address, commit_add);
+                strcat(address, "/");
+                strcat(address, argv[3]);
+                FILE *file = fopen(address, "r");
+                if (file == NULL) {
+                    printf("file1 doesnt exist\n");
+                    return 1;
+                }
+                fclose(file);
+
+                //word
+                char *word = (char *) malloc(10000 * sizeof(char));
+                strcpy(word, argv[5]);
+
+                int counter = 0;
+                file = fopen(address, "r");
+                char *file_content = (char *) malloc(10000 * sizeof(char));
+                while (fgets(file_content, 10000, file) != NULL) {
+                    if (file_content[strlen(file_content) - 1] == '\n')
+                        file_content[strlen(file_content) - 1] = '\0';
+                    //counter++;
+                    if (strstr(word, file_content) != NULL) {
+                        printf("%s\n", file_content);
+                        //printf("line num = %d\n" , counter);
+                    }
+                }
+                fclose(file);
+            } else {
+                printf("invalid command\n");
+                return 1;
+            }
+        }
+        if (argc == 9) {
+            if ((strcmp(argv[2], "-f") == 0) && (strcmp(argv[4], "-p") == 0) && (strcmp(argv[6], "-c") == 0) && (strcmp(argv[8], "-n") == 0)) {
+
+                //commit id
+                char *id = (char *) malloc(10000 * sizeof(char));
+                strcpy(id, argv[7]);
+
+                FILE *file2 = fopen(".neogit/commits_addressandid", "r");
+                char *commit_info = (char *) malloc(10000 * sizeof(char));
+                char *commit_add = (char *) malloc(10000 * sizeof(char));
+                while (fgets(commit_info, 10000, file2) != NULL) {
+                    if (commit_info[strlen(commit_info) - 1] == '\n')
+                        commit_info[strlen(commit_info) - 1] = '\0';
+                    char *token = strtok(commit_info, " ");
+                    if (strcmp(token, id) == 0) {
+                        token = (NULL, " ");
+                        strcpy(commit_add, token);
+                    }
+                }
+                fclose(file2);
+
+                //search file
+                char *address = (char *) malloc(10000 * sizeof(char));
+                strcpy(address, commit_add);
+                strcat(address, "/");
+                strcat(address, argv[3]);
+                FILE *file = fopen(address, "r");
+                if (file == NULL) {
+                    printf("file1 doesnt exist\n");
+                    return 1;
+                }
+                fclose(file);
+
+                //word
+                char *word = (char *) malloc(10000 * sizeof(char));
+                strcpy(word, argv[5]);
+
+                int counter = 0;
+                file = fopen(address, "r");
+                char *file_content = (char *) malloc(10000 * sizeof(char));
+                while (fgets(file_content, 10000, file) != NULL) {
+                    if (file_content[strlen(file_content) - 1] == '\n')
+                        file_content[strlen(file_content) - 1] = '\0';
+                    counter++;
+                    if (strstr(word, file_content) != NULL) {
+                        printf("%s\n", file_content);
+                        printf("line num = %d\n" , counter);
+                    }
+                }
+                fclose(file);
+            } else {
+                printf("invalid command\n");
+                return 1;
+            }
+        } else {
+            printf("invalid command\n");
+            return 1;
+        }
+        return 0;
     }
-    return 0;
-}
 
 /////////////////////////////////////////////////////////////////////////////////////
-int main(int argc, char *argv[]) {
+    int main(int argc, char *argv[]) {
 
-    if (argc < 2) {
-        fprintf(stdout, "please enter a valid command\n");
-        return 1;
-    }//printf("1\n");
-    if (strcmp(argv[1], "init") == 0) {
-        return run_init(argc, argv);
+        if (argc < 2) {
+            fprintf(stdout, "please enter a valid command\n");
+            return 1;
+        }//printf("1\n");
+        if (strcmp(argv[1], "init") == 0) {
+            return run_init(argc, argv);
+        }
+
+
+        if (strcmp(true_command(argv[1]), "init") == 0) {
+            return run_init(argc, argv);
+        }
+        if ((strcmp(true_command(argv[1]), "config") == 0) || (strcmp(argv[1], "config") == 0)) {
+            return run_config(argc, argv);
+            printf("1\n");
+        } else if ((strcmp(argv[1], "add") == 0) || (strcmp(true_command(argv[1]), "add") == 0)) {
+            return run_add(argc, argv);
+            printf("1\n");
+        } else if ((strcmp(argv[1], "reset") == 0) || (strcmp(true_command(argv[1]), "reset") == 0)) {
+            return run_reset(argc, argv);
+            printf("1\n");
+        } else if ((strcmp(argv[1], "commit") == 0) || (strcmp(true_command(argv[1]), "commit") == 0)) {
+            return run_commit(argc, argv);
+            printf("1\n");
+        } else if ((strcmp(argv[1], "log") == 0) || (strcmp(true_command(argv[1]), "log") == 0)) {
+            return run_log(argc, argv);
+        } else if ((strcmp(argv[1], "branch") == 0) || (strcmp(true_command(argv[1]), "branch") == 0)) {
+            return run_branch(argc, argv);
+        } else if ((strcmp(argv[1], "checkout") == 0) || (strcmp(true_command(argv[1]), "checkout") == 0)) {
+            return run_checkout(argc, argv);
+        } else if ((strcmp(argv[1], "status") == 0) || (strcmp(true_command(argv[1]), "status") == 0)) {
+            return run_status(argc, argv);
+        } else if ((strcmp(argv[1], "set") == 0) || (strcmp(true_command(argv[1]), "set") == 0)) {
+            return run_set(argc, argv);
+        } else if ((strcmp(argv[1], "replace") == 0) || (strcmp(true_command(argv[1]), "replace") == 0)) {
+            return run_replace(argc, argv);
+        } else if ((strcmp(argv[1], "remove") == 0) || (strcmp(true_command(argv[1]), "remove") == 0)) {
+            return run_remove(argc, argv);
+        }
+//    //else if ((strcmp(argv[1], "diff") == 0) || (strcmp(true_command(argv[1]), "diff") == 0)) {
+//        return run_diff(argc, argv);
+//    }
+        else if ((strcmp(argv[1], "tag") == 0) || (strcmp(true_command(argv[1]), "tag") == 0)) {
+            return run_tag(argc, argv);
+        } else if ((strcmp(argv[1], "grep") == 0) || (strcmp(true_command(argv[1]), "grep") == 0)) {
+            return run_grep(argc, argv);
+        } else {
+            printf("invalid command\n");
+        }
+
+        return 0;
     }
-
-
-    if (strcmp(true_command(argv[1]), "init") == 0) {
-        return run_init(argc, argv);
-    }
-    if ((strcmp(true_command(argv[1]), "config") == 0) || (strcmp(argv[1], "config") == 0)) {
-        return run_config(argc, argv);
-        printf("1\n");
-    } else if ((strcmp(argv[1], "add") == 0) || (strcmp(true_command(argv[1]), "add") == 0)) {
-        return run_add(argc, argv);
-        printf("1\n");
-    } else if ((strcmp(argv[1], "reset") == 0) || (strcmp(true_command(argv[1]), "reset") == 0)) {
-        return run_reset(argc, argv);
-        printf("1\n");
-    } else if ((strcmp(argv[1], "commit") == 0) || (strcmp(true_command(argv[1]), "commit") == 0)) {
-        return run_commit(argc, argv);
-        printf("1\n");
-    } else if ((strcmp(argv[1], "log") == 0) || (strcmp(true_command(argv[1]), "log") == 0)) {
-        return run_log(argc, argv);
-    } else if ((strcmp(argv[1], "branch") == 0) || (strcmp(true_command(argv[1]), "branch") == 0)) {
-        return run_branch(argc, argv);
-    } else if ((strcmp(argv[1], "checkout") == 0) || (strcmp(true_command(argv[1]), "checkout") == 0)) {
-        return run_checkout(argc, argv);
-    } else if ((strcmp(argv[1], "status") == 0) || (strcmp(true_command(argv[1]), "status") == 0)) {
-        return run_status(argc, argv);
-    } else if ((strcmp(argv[1], "set") == 0) || (strcmp(true_command(argv[1]), "set") == 0)) {
-        return run_set(argc, argv);
-    } else if ((strcmp(argv[1], "replace") == 0) || (strcmp(true_command(argv[1]), "replace") == 0)) {
-        return run_replace(argc, argv);
-    } else if ((strcmp(argv[1], "remove") == 0) || (strcmp(true_command(argv[1]), "remove") == 0)) {
-        return run_remove(argc, argv);
-    } else if ((strcmp(argv[1], "diff") == 0) || (strcmp(true_command(argv[1]), "diff") == 0)) {
-        return run_diff(argc, argv);
-    } else if ((strcmp(argv[1], "tag") == 0) || (strcmp(true_command(argv[1]), "tag") == 0)) {
-        return run_tag(argc, argv);
-    } else {
-        printf("invalid command\n");
-    }
-
-    return 0;
-}
