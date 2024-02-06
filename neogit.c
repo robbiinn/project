@@ -921,6 +921,7 @@ int run_add(int argc, char *const argv[]) {
             fclose(file);
             fclose(stage);
         }
+
         FILE *l_add;
         if(strcmp(argv[2] , "-f") == 0){
             if (i == 3) {
@@ -938,12 +939,10 @@ int run_add(int argc, char *const argv[]) {
             if (i == 2) {
                 l_add = fopen(".neogit/last_address", "w");
                 fprintf(l_add, "%s\n", argv[i]);
-                printf("1\n");
             }
             else {
                 l_add = fopen(".neogit/last_address", "a");
                 fprintf(l_add, "%s\n", argv[i]);
-                printf("2\n");
             }
         }
         fclose(l_add);
@@ -1128,10 +1127,12 @@ int run_reset(int argc, char *const argv[]) {
 //                char command2[10000] = "";
 //                sprintf(command2, "rm -r %s", last_unstaged_address);
 //                system(command2);
-                return 0;
             }
+            return 0;
         }
+        return 0;
     }
+    return 0;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
