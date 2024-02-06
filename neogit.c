@@ -4125,15 +4125,13 @@ int main(int argc, char *argv[]) {
         return run_remove(argc, argv);
     } else if ((strcmp(argv[1], "pre_commit") == 0) || (strcmp(true_command(argv[1]), "pre_commit") == 0)) {
         return run_pre_commit(argc, argv);
-    }
-////    //else if ((strcmp(argv[1], "diff") == 0) || (strcmp(true_command(argv[1]), "diff") == 0)) {
-////        return run_diff(argc, argv);
-////    }
-//        else if ((strcmp(argv[1], "tag") == 0) || (strcmp(true_command(argv[1]), "tag") == 0)) {
-//            return run_tag(argc, argv);
-//        } else if ((strcmp(argv[1], "grep") == 0) || (strcmp(true_command(argv[1]), "grep") == 0)) {
-//            return run_grep(argc, argv);
-//        } else {
+    }else if ((strcmp(argv[1], "diff") == 0) || (strcmp(true_command(argv[1]), "diff") == 0)) {
+        return run_diff(argc, argv);
+    }else if ((strcmp(argv[1], "tag") == 0) || (strcmp(true_command(argv[1]), "tag") == 0)) {
+            return run_tag(argc, argv);
+    } else if ((strcmp(argv[1], "grep") == 0) || (strcmp(true_command(argv[1]), "grep") == 0)) {
+            return run_grep(argc, argv);
+    } else {
     printf("invalid command\n");
     //}
 
