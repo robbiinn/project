@@ -931,7 +931,6 @@ int run_add(int argc, char *const argv[]) {
                 fprintf(l_add, "%s\n", argv[i]);
             }
         } else {
-            printf("0\n");
             if (i == 2) {
                 l_add = fopen(".neogit/last_address", "w");
                 fprintf(l_add, "%s\n", argv[i]);
@@ -1674,24 +1673,9 @@ int run_checkout(int argc, char *const argv[]) {
 
 
             //if repository and last commit are same
-
-            //the last branch
-            FILE *file = fopen(".neogit/branch_name", "r");
-            if (file == NULL)
-                return 1;
-            char *last_branch = (char *) malloc(10000 * sizeof(char));
-            fgets(last_branch, 10000, file);
-            if (last_branch[strlen(last_branch) - 1] == '\n')
-                last_branch[strlen(last_branch) - 1] = '\0';
-            fclose(file);
-
             //last commit
-            char *last_branch_to_id = (char *) malloc(10000 * sizeof(char));
-            strcpy(last_branch_to_id, ".neogit/branches/");
-            strcat(last_branch_to_id, last_branch);
-            strcpy(last_branch_to_id, "/this_branch_id");
             char *last_commit = (char *) malloc(10000 * sizeof(char));
-            file = fopen(last_branch_to_id, "r");/////////////////////close
+            FILE *file = fopen(".neogit/current_commit_id", "r");
             fgets(last_commit, 10000, file);
             if (last_commit[strlen(last_commit) - 1] == '\n')
                 last_commit[strlen(last_commit) - 1] = '\0';
@@ -1703,6 +1687,7 @@ int run_checkout(int argc, char *const argv[]) {
             strcpy(last_commit_address, token);
             fclose(file);
 
+
             //compare
             int counter = 0;
             int counter2 = 0;
@@ -1713,17 +1698,17 @@ int run_checkout(int argc, char *const argv[]) {
                 perror("Error opening current directory");
                 return 1;
             }
-
             struct dirent *entry_commit;
-            DIR *dir_commit = opendir(last_commit_address);
-            if (dir_commit == NULL) {
-                perror("Error opening current directory");
-                return 1;
-            }
+            DIR *dir_commit;
 
             while ((entry = readdir(dir)) != NULL) {
                 if (entry->d_name[0] != '.') {
                     counter++;
+                    dir_commit = opendir(last_commit_address);
+                    if (dir_commit == NULL) {
+                        perror("Error opening current directory");
+                        return 1;
+                    }
                     while ((entry_commit = readdir(dir_commit)) != NULL) {
                         if (entry_commit->d_name[0] != '.') {
                             counter3++;
@@ -1732,26 +1717,90 @@ int run_checkout(int argc, char *const argv[]) {
                             }
                         }
                     }
+                    closedir(dir_commit);
                 }
             }
             closedir(dir);
-            closedir(dir_commit);
 
             //check
             if (counter != counter2) {
                 printf("files in repository has not been commited yet\n");
                 return 1;
             }
-//            if (counter3 != counter2 * counter2) {
-//                printf("files in repository has not been commited yet\n");
-//                return 1;
-//            }
+
+            //move to last branch
+            //the last branch
+            file = fopen(".neogit/branch_name", "r");
+            if (file == NULL)
+                return 1;
+            char *last_branch = (char *) malloc(10000 * sizeof(char));
+            fgets(last_branch, 10000, file);
+            if (last_branch[strlen(last_branch) - 1] == '\n')
+                last_branch[strlen(last_branch) - 1] = '\0';
+            fclose(file);
+
+            char *last_branch_address = (char *) malloc(10000 * sizeof(char));
+            char *last_branch_commit = (char *) malloc(10000 * sizeof(char));
+            strcpy(last_branch_address, ".neogit/branches/");
+            strcat(last_branch_address, last_branch);
+            strcat(last_branch_address, "/this_branch_id");
+            file = fopen(last_branch_address, "r");
+            if (file == NULL)
+                return 1;
+            fgets(last_branch_commit, 10000, file);
+            if (last_branch_commit[strlen(last_branch_commit) - 1] == '\n')
+                last_branch_commit[strlen(last_branch_commit) - 1] = '\0';
+            char *tok = strtok(last_branch_commit, " ");
+            char *head = (char *) malloc(10000 * sizeof(char));
+            strcpy(head, tok);
+            tok = strtok(NULL, " ");
+            char *head_address = (char *) malloc(10000 * sizeof(char));
+            strcpy(head_address, tok);
+            fclose(file);
+
+            //copy in rep
+            //remove rep
+            dir = opendir(".");
+            if (dir == NULL) {
+                perror("Error opening current directory");
+                return 1;
+            }
+            while ((entry = readdir(dir)) != NULL) {
+                if (entry->d_name[0] != '.') {
+                    char command[100];
+                    sprintf(command, "rm -r %s", entry->d_name);
+                    system(command);
+                }
+            }
+            closedir(dir);
+
+            //copy
+            char *new_rep_file = (char *) malloc(10000 * sizeof(char));
+            dir = opendir(head_address);
+            if (dir == NULL) {
+                perror("Error opening current directory");
+                return 1;
+            }
+            while ((entry = readdir(dir)) != NULL) {
+                if (entry->d_name[0] != '.') {
+                    strcpy(new_rep_file, head_address);
+                    strcat(new_rep_file, "/");
+                    strcat(new_rep_file, entry->d_name);
+                    char command[10000] = "";
+                    sprintf(command, "rsync -r %s %s", new_rep_file, ".");
+                    system(command);
+                }
+            }
+            closedir(dir);
+
+            //current id
+            file = fopen(".neogit/current_commit_id", "w");
+            fprintf(file, "%s %s\n", head, head_address);
+            fclose(file);
 
 
             return 0;
-        } else if (strcmp(argv[2], "HEAD-n") == 0) {
 
-            return 0;
         } else {
 
             //if it is number
@@ -2015,6 +2064,7 @@ int run_checkout(int argc, char *const argv[]) {
                 strcpy(last_commit_address, token);
                 fclose(file);
 
+
                 //compare
                 int counter = 0;
                 int counter2 = 0;
@@ -2025,7 +2075,6 @@ int run_checkout(int argc, char *const argv[]) {
                     perror("Error opening current directory");
                     return 1;
                 }
-
                 struct dirent *entry_commit;
                 DIR *dir_commit;
 
@@ -2050,12 +2099,15 @@ int run_checkout(int argc, char *const argv[]) {
                 }
                 closedir(dir);
 
-
                 //check
                 if (counter != counter2) {
                     printf("files in repository has not been commited yet\n");
                     return 1;
                 }
+//                if (counter3 != counter2 * counter2) {
+//                    printf("files in repository has not been commited yet\n");
+//                    return 1;
+//                }
 
                 //move to the new branch
                 //remove files and directories
@@ -2136,8 +2188,10 @@ int run_checkout(int argc, char *const argv[]) {
 //                }
 //                closedir(dir);
 
-                //change branch?????????????
-                char *which_branch = strtok(last_address, "/");
+                //change branch
+                char *given_commit_address2 = (char *) malloc(10000 * sizeof(char));
+                strcpy(given_commit_address2, given_commit_address);
+                char *which_branch = strtok(given_commit_address2, "/");
                 for (int i = 0; i < 2; i++) {
                     which_branch = strtok(NULL, "/");
                 }
@@ -2151,7 +2205,7 @@ int run_checkout(int argc, char *const argv[]) {
 
                 //change current commit
                 file = fopen(".neogit/current_commit_id", "w");
-                fprintf(file, "%s %s\n", sth, given_commit_address);///////////////////////id++?
+                fprintf(file, "%s %s\n", sth, given_commit_address);
                 fclose(file);
 
 
@@ -2160,6 +2214,160 @@ int run_checkout(int argc, char *const argv[]) {
 
             }
 
+        }
+    } else if (argc == 4) {
+        if (strcmp(argv[2], "HEAD") == 0) {
+            //if repository and last commit are same
+            //last commit
+            char *last_commit = (char *) malloc(10000 * sizeof(char));
+            FILE *file = fopen(".neogit/current_commit_id", "r");
+            fgets(last_commit, 10000, file);
+            if (last_commit[strlen(last_commit) - 1] == '\n')
+                last_commit[strlen(last_commit) - 1] = '\0';
+            char *last_id = (char *) malloc(10000 * sizeof(char));
+            char *token = strtok(last_commit, " ");
+            strcpy(last_id, token);
+            char *last_commit_address = (char *) malloc(10000 * sizeof(char));
+            token = strtok(NULL, " ");
+            strcpy(last_commit_address, token);
+            fclose(file);
+
+
+            //compare
+            int counter = 0;
+            int counter2 = 0;
+            int counter3 = 0;
+            struct dirent *entry;
+            DIR *dir = opendir(".");
+            if (dir == NULL) {
+                perror("Error opening current directory");
+                return 1;
+            }
+            struct dirent *entry_commit;
+            DIR *dir_commit;
+
+            while ((entry = readdir(dir)) != NULL) {
+                if (entry->d_name[0] != '.') {
+                    counter++;
+                    dir_commit = opendir(last_commit_address);
+                    if (dir_commit == NULL) {
+                        perror("Error opening current directory");
+                        return 1;
+                    }
+                    while ((entry_commit = readdir(dir_commit)) != NULL) {
+                        if (entry_commit->d_name[0] != '.') {
+                            counter3++;
+                            if (strcmp(entry_commit->d_name, entry->d_name) == 0) {
+                                counter2++;
+                            }
+                        }
+                    }
+                    closedir(dir_commit);
+                }
+            }
+            closedir(dir);
+
+            //check
+            if (counter != counter2) {
+                printf("files in repository has not been commited yet\n");
+                return 1;
+            }
+
+            //move to last branch
+            //the last branch
+            file = fopen(".neogit/branch_name", "r");
+            if (file == NULL)
+                return 1;
+            char *last_branch = (char *) malloc(10000 * sizeof(char));
+            fgets(last_branch, 10000, file);
+            if (last_branch[strlen(last_branch) - 1] == '\n')
+                last_branch[strlen(last_branch) - 1] = '\0';
+            fclose(file);
+
+            char *last_branch_address = (char *) malloc(10000 * sizeof(char));
+            char *last_branch_commit = (char *) malloc(10000 * sizeof(char));
+            strcpy(last_branch_address, ".neogit/branches/");
+            strcat(last_branch_address, last_branch);
+            strcat(last_branch_address, "/this_branch_id");
+            file = fopen(last_branch_address, "r");
+            if (file == NULL)
+                return 1;
+            fgets(last_branch_commit, 10000, file);
+            if (last_branch_commit[strlen(last_branch_commit) - 1] == '\n')
+                last_branch_commit[strlen(last_branch_commit) - 1] = '\0';
+            char *tok = strtok(last_branch_commit, " ");
+            char *head = (char *) malloc(10000 * sizeof(char));
+            strcpy(head, tok);
+            fclose(file);
+
+            int n = atoi(head);
+            int given_n = atoi(argv[3]);
+            if (given_n >= n) {
+                printf("invalid command\n");
+                return 1;
+            }
+            file = fopen(last_branch_address, "r");
+            if (file == NULL)
+                return 1;
+            char *find_commit = (char *) malloc(10000 * sizeof(char));
+            for (int i = 0; i < given_n + 1; i++) {
+                fgets(find_commit, 10000, file);
+                if (find_commit[strlen(find_commit) - 1] == '\n')
+                    find_commit[strlen(find_commit) - 1] = '\0';
+            }
+            char *toke2 = strtok(find_commit, " ");
+            char *find_id = (char *) malloc(10000 * sizeof(char));
+            strcpy(find_id, toke2);
+            toke2 = strtok(NULL, " ");
+            char *find_address = (char *) malloc(10000 * sizeof(char));
+            strcpy(find_address, toke2);
+
+
+            //copy in rep
+            //remove rep
+            dir = opendir(".");
+            if (dir == NULL) {
+                perror("Error opening current directory");
+                return 1;
+            }
+            while ((entry = readdir(dir)) != NULL) {
+                if (entry->d_name[0] != '.') {
+                    char command[100];
+                    sprintf(command, "rm -r %s", entry->d_name);
+                    system(command);
+                }
+            }
+            closedir(dir);
+
+            //copy
+            char *new_rep_file = (char *) malloc(10000 * sizeof(char));
+            dir = opendir(find_address);
+            if (dir == NULL) {
+                perror("Error opening current directory");
+                return 1;
+            }
+            while ((entry = readdir(dir)) != NULL) {
+                if (entry->d_name[0] != '.') {
+                    strcpy(new_rep_file, find_address);
+                    strcat(new_rep_file, "/");
+                    strcat(new_rep_file, entry->d_name);
+                    char command[10000] = "";
+                    sprintf(command, "rsync -r %s %s", new_rep_file, ".");
+                    system(command);
+                }
+            }
+            closedir(dir);
+
+            //current id
+            file = fopen(".neogit/current_commit_id", "w");
+            fprintf(file, "%s %s\n", head, find_address);
+            fclose(file);
+
+
+            return 0;
+        } else {
+            printf("invalid command\n");
+            return 1;
         }
     } else {
         printf("invalid command\n");
@@ -2524,14 +2732,14 @@ int run_diff(int argc, char *const argv[]) {
                     break;
             }
             line1++;
-            while (fgets(file2_content, 10000, file2) != NULL) {
-                while (isWhitespaceLine(file2_content) == 1) {
-                    fgets(file2_content, 10000, file2);
-                    if (file1_content == NULL)
-                        break;
-                }
-                line2++;
+        }
+        while (fgets(file2_content, 10000, file2) != NULL) {
+            while (isWhitespaceLine(file2_content) == 1) {
+                fgets(file2_content, 10000, file2);
+                if (file1_content == NULL)
+                    break;
             }
+            line2++;
         }
         fclose(file1);
         fclose(file2);
@@ -2630,161 +2838,200 @@ int run_diff(int argc, char *const argv[]) {
         }
         return 0;
     } else if (argc == 9) {
-//        if (strcmp(argv[2], "-f") != 0) {
-//            printf("invalid command\n");
-//            return 1;
-//        }
-//        if (strcmp(argv[5], "-line1") != 0) {
-//            printf("invalid command\n");
-//            return 1;
-//        }
-//        if (strcmp(argv[7], "-line2") != 0) {
-//            printf("invalid command\n");
-//            return 1;
-//        }
-//        char * file1_begin = (char *) malloc(100 * sizeof(char));
-//        char * file1_end = (char *) malloc(100 * sizeof(char));
-//        char * file2_begin = (char *) malloc(100 * sizeof(char));
-//        char * file2_end = (char *) malloc(100 * sizeof(char));
-//        file1_begin = strtok(argv[6] , "-");
-//        //find file 1
-//        char *address1 = (char *) malloc(10000 * sizeof(char));
-//        strcpy(address1, argv[3]);
-//        FILE *file1 = fopen(address1, "r");
-//        if (file1 == NULL) {
-//            printf("file1 doesnt exist\n");
-//            return 1;
-//        }
-//
-//        //find file2
-//        char *address2 = (char *) malloc(10000 * sizeof(char));
-//        strcpy(address2, argv[4]);
-//        FILE *file2 = fopen(address2, "r");
-//        if (file2 == NULL) {
-//            printf("file2 doesnt exist\n");
-//            return 1;
-//        }
-//
-//
-//        //counter line
-//        int line1 = 0;
-//        int line2 = 0;
-//        int min_line = 0;
-//        int counter_line = 0;
-//        char *file1_content = (char *) malloc(10000 * sizeof(char));
-//        char *file2_content = (char *) malloc(10000 * sizeof(char));
-//        while (fgets(file1_content, 10000, file1) != NULL) {
-//            while (isWhitespaceLine(file1_content) == 1) {
-//                fgets(file1_content, 10000, file1);
-//                if (file1_content == NULL)
-//                    break;
-//            }
-//            line1++;
-//            while (fgets(file2_content, 10000, file2) != NULL) {
-//                while (isWhitespaceLine(file2_content) == 1) {
-//                    fgets(file2_content, 10000, file2);
-//                    if (file1_content == NULL)
-//                        break;
-//                }
-//                line2++;
-//            }
-//        }
-//        fclose(file1);
-//        fclose(file2);
-//        //compare
-//        int flag = 0;
-//        file1 = fopen(address1, "r");
-//        file2 = fopen(address2, "r");
-//        int counter_line1 = 0;
-//        int counter_line2 = 0;
-//        while (fgets(file1_content, 10000, file1) != NULL) {
-//            flag = 0;
-//            while (isWhitespaceLine(file1_content) == 1) {
-//                fgets(file1_content, 10000, file1);
-//                if (file1_content == NULL)
-//                {
-//                    flag = 1;
-//                    break;
-//                }
-//            }
-//            if(flag == 1)
-//                break;
-//            counter_line1++;
-//            if(fgets(file2_content, 10000, file2) == NULL)
-//                break;
-//            while (isWhitespaceLine(file2_content) == 1) {
-//                fgets(file2_content, 10000, file2);
-//                if (file2_content == NULL) {
-//                    flag = 2;
-//                    break;
-//                }
-//            }
-//            if(flag == 2)
-//                break;
-//            counter_line2++;
-//            if (strcmp(file1_content, file2_content) != 0) {
-//                printf("%s %d\n", address1, counter_line1);
-//                printf(BLU "%s" Reset, file1_content);
-//                printf("%s %d\n", address2, counter_line2);
-//                printf(RED "%s" Reset, file2_content);
-//            }
-//        }
-//        fclose(file1);
-//        fclose(file2);
-//        flag  = 0;
-//        file1 = fopen(address1, "r");
-//        file2 = fopen(address2, "r");
-//        if (line1 < line2) {
-//            while (fgets(file1_content, 10000, file1) != NULL) {
-//
-//                while (isWhitespaceLine(file1_content) == 1) {
-//                    fgets(file1_content, 10000, file1);
-//                    if (file1_content == NULL)
-//                        break;
-//                }
-//                fgets(file2_content, 10000, file2);
-//                while (isWhitespaceLine(file2_content) == 1) {
-//                    fgets(file2_content, 10000, file2);
-//                    if (file2_content == NULL)
-//                        break;
-//                }
-//            }
-//            printf("extra lines in %s\n", address2);
-//            while (fgets(file2_content, 10000, file2) != NULL) {
-//                while (isWhitespaceLine(file2_content) == 1) {
-//                    fgets(file2_content, 10000, file2);
-//                    if (file2_content == NULL)
-//                        break;
-//                }
-//                printf(RED "%s" Reset, file2_content);
-//            }
-//        }
-//        if (line1 > line2) {
-//            while (fgets(file2_content, 10000, file2) != NULL) {
-//
-//                while (isWhitespaceLine(file2_content) == 1) {
-//                    fgets(file2_content, 10000, file2);
-//                    if (file2_content == NULL)
-//                        break;
-//
-//                }
-//                fgets(file1_content, 10000, file1);
-//                while (isWhitespaceLine(file1_content) == 1) {
-//                    fgets(file1_content, 10000, file1);
-//                    if (file1_content == NULL)
-//                        break;
-//                }
-//            }
-//            printf("extra lines in %s\n", address1);
-//            while (fgets(file1_content, 10000, file1) != NULL) {
-//                while (isWhitespaceLine(file1_content) == 1) {
-//                    fgets(file1_content, 10000, file1);
-//                    if (file1_content == NULL)
-//                        break;
-//                }
-//                printf(BLU "%s" Reset, file1_content);
-//            }
-//        }
+        if (strcmp(argv[2], "-f") != 0) {
+            printf("invalid command\n");
+            return 1;
+        }
+        if (strcmp(argv[5], "-line1") != 0) {
+            printf("invalid command\n");
+            return 1;
+        }
+        if (strcmp(argv[7], "-line2") != 0) {
+            printf("invalid command\n");
+            return 1;
+        }
+
+        char *file1_begin = (char *) malloc(100 * sizeof(char));
+        char *file1_end = (char *) malloc(100 * sizeof(char));
+        char *file2_begin = (char *) malloc(100 * sizeof(char));
+        char *file2_end = (char *) malloc(100 * sizeof(char));
+
+        file1_begin = strtok(argv[6], "-");
+        printf("%s\n", file1_begin);
+        file1_end = strtok(NULL, " ");
+        printf("%s\n", file1_end);
+
+        file2_begin = strtok(argv[8], "-");
+        printf("%s\n", file2_begin);
+        file2_end = strtok(NULL, " ");
+        printf("%s\n", file2_end);
+
+        int begin1 = atoi(file1_begin);
+        int end1 = atoi(file1_end);
+        int begin2 = atoi(file2_begin);
+        int end2 = atoi(file2_end);
+
+        //find file 1
+        char *address1 = (char *) malloc(10000 * sizeof(char));
+        strcpy(address1, argv[3]);
+        FILE *file1 = fopen(address1, "r");
+        if (file1 == NULL) {
+            printf("file1 doesnt exist\n");
+            return 1;
+        }
+
+        //find file2
+        char *address2 = (char *) malloc(10000 * sizeof(char));
+        strcpy(address2, argv[4]);
+        FILE *file2 = fopen(address2, "r");
+        if (file2 == NULL) {
+            printf("file2 doesnt exist\n");
+            return 1;
+        }
+
+        //counter line
+        int line1 = 0;
+        int line2 = 0;
+        int min_line = 0;
+        int counter1 = 0;
+        int counter2 = 0;
+
+        char *file1_content = (char *) malloc(10000 * sizeof(char));
+        char *file2_content = (char *) malloc(10000 * sizeof(char));
+        while (fgets(file1_content, 10000, file1) != NULL) {
+            counter1++;
+
+            while (isWhitespaceLine(file1_content) == 1) {
+                fgets(file1_content, 10000, file1);
+                counter1++;
+                if (file1_content == NULL)
+                    break;
+            }
+            line1++;
+        }
+        while (fgets(file2_content, 10000, file2) != NULL) {
+            counter2++;
+
+            while (isWhitespaceLine(file2_content) == 1) {
+                fgets(file2_content, 10000, file2);
+                counter2++;
+                if (file1_content == NULL)
+                    break;
+            }
+            line2++;
+        }
+        fclose(file1);
+        fclose(file2);
+
+        //printf("%d %d %d %d\n" , end1 , counter1 , end2 , counter2);
+        if(end2 > counter2 || end1 > counter1)
+        {
+            printf("invalid line\n");
+            return 1;
+        }
+
+
+        int cn = 0;
+        if((end2 - begin2) <= (end1 - begin1))
+            cn  = end2 - begin2 + 1;
+        else
+            cn  = end1 - begin1 + 1;
+
+        int counter_line1 = 0;
+        int counter_line2 = 0;
+        file1 = fopen(address1, "r");
+        file2 = fopen(address2, "r");
+
+        for(int i = 0 ; i < begin1 - 1 ; i++)
+        {
+            fgets(file1_content, 10000, file1);
+            //counter_line1++;
+        }
+        for(int i = 0 ; i < begin2 - 1 ; i++)
+        {
+            fgets(file2_content, 10000, file2);
+            //counter_line2++;
+        }
+
+        //compare
+        int flag = 0;
+
+        while (fgets(file1_content, 10000, file1) != NULL) {
+            flag = 0;
+            while (isWhitespaceLine(file1_content) == 1) {
+                fgets(file1_content, 10000, file1);
+                if (file1_content == NULL)
+                {
+                    flag = 1;
+                    break;
+                }
+            }
+            if(flag == 1)
+                break;
+            counter_line1++;
+            if(fgets(file2_content, 10000, file2) == NULL)
+                break;
+            while (isWhitespaceLine(file2_content) == 1) {
+                fgets(file2_content, 10000, file2);
+                if (file2_content == NULL) {
+                    flag = 2;
+                    break;
+                }
+            }
+            if(flag == 2)
+                break;
+            counter_line2++;
+            if (strcmp(file1_content, file2_content) != 0) {
+                printf("%s %d\n", address1, begin1 + counter_line1 - 1);
+                printf(BLU "%s" Reset, file1_content);
+                printf("%s %d\n", address2, begin2 + counter_line2 - 1);
+                printf(RED "%s" Reset, file2_content);
+            }
+            if(counter_line2 == cn)
+                break;
+        }
+        fclose(file1);
+        fclose(file2);
+
+        flag  = 0;
+        file1 = fopen(address1, "r");
+        file2 = fopen(address2, "r");
+        if ((end1 - begin1) < (end2 - begin2)) {
+
+            for(int i = 0 ; i < begin2 + (end1 - begin1) ; i++)
+            {
+                fgets(file2_content, 10000, file2);
+                //counter_line1++;
+            }
+
+            printf("extra lines in %s\n", address2);
+            while (fgets(file2_content, 10000, file2) != NULL) {
+                while (isWhitespaceLine(file2_content) == 1) {
+                    fgets(file2_content, 10000, file2);
+                    if (file2_content == NULL)
+                        break;
+                }
+                printf(RED "%s" Reset, file2_content);
+            }
+        }
+        if ((end1 - begin1) > (end2 - begin2)){
+
+            for(int i = 0 ; i < begin1 + (end2 - begin2) ; i++)
+            {
+                fgets(file1_content, 10000, file1);
+                //counter_line1++;
+            }
+
+            printf("extra lines in %s\n", address1);
+            while (fgets(file1_content, 10000, file1) != NULL) {
+                while (isWhitespaceLine(file1_content) == 1) {
+                    fgets(file1_content, 10000, file1);
+                    if (file1_content == NULL)
+                        break;
+                }
+                printf(BLU "%s" Reset, file1_content);
+            }
+        }
         return 0;
     } else {
         printf("invalid command\n");
@@ -2884,12 +3131,11 @@ int run_tag(int argc, char *const argv[]) {
                                     break;
                                 }
                             }
-                            if(flag2 == 0){
-                                if (strlen(new_tag) >= strlen(tags)){
+                            if (flag2 == 0) {
+                                if (strlen(new_tag) >= strlen(tags)) {
                                     fprintf(file2, "%s\n", new_tag);
                                     fprintf(file2, "%s\n", tags);
-                                }
-                                else{
+                                } else {
                                     fprintf(file2, "%s\n", tags);
                                     fprintf(file2, "%s\n", new_tag);
                                 }
@@ -2940,19 +3186,19 @@ int run_tag(int argc, char *const argv[]) {
                 int wow = 0;
                 FILE *file = fopen(".neogit/tags/tag_data", "r");
                 char *tag_data = (char *) malloc(10000 * sizeof(char));
-                char * tag_name = (char *) malloc(10000 * sizeof(char));
+                char *tag_name = (char *) malloc(10000 * sizeof(char));
                 while (fgets(tag_data, 10000, file) != NULL) {
                     if (tag_data[strlen(tag_data) - 1] == '\n')
                         tag_data[strlen(tag_data) - 1] = '\0';
-                    strcpy(tag_name , tag_data);
-                    char * token = strtok(tag_name , " ");
-                    if(strcmp(token , argv[3]) == 0){
+                    strcpy(tag_name, tag_data);
+                    char *token = strtok(tag_name, " ");
+                    if (strcmp(token, argv[3]) == 0) {
                         wow = 1;
-                        printf("%s\n" , tag_data);
+                        printf("%s\n", tag_data);
                         break;
                     }
                 }
-                if(wow == 0){
+                if (wow == 0) {
                     printf("this tag doesnt exist\n");
                     return 1;
                 }
@@ -3052,12 +3298,11 @@ int run_tag(int argc, char *const argv[]) {
                                         break;
                                     }
                                 }
-                                if(flag2 == 0){
-                                    if (strlen(new_tag) >= strlen(tags)){
+                                if (flag2 == 0) {
+                                    if (strlen(new_tag) >= strlen(tags)) {
                                         fprintf(file2, "%s\n", new_tag);
                                         fprintf(file2, "%s\n", tags);
-                                    }
-                                    else{
+                                    } else {
                                         fprintf(file2, "%s\n", tags);
                                         fprintf(file2, "%s\n", new_tag);
                                     }
@@ -3113,7 +3358,7 @@ int run_tag(int argc, char *const argv[]) {
                     while (fgets(tag_content, 10000, file) != NULL) {
                         if (tag_content[strlen(tag_content) - 1] == '\n')
                             tag_content[strlen(tag_content) - 1] = '\0';
-                        strcpy(tag_content2 , tag_content);
+                        strcpy(tag_content2, tag_content);
                         char *toke = strtok(tag_content2, " ");
 
                         if (strcmp(toke, new_tag) == 0) {
@@ -3235,12 +3480,11 @@ int run_tag(int argc, char *const argv[]) {
                                         break;
                                     }
                                 }
-                                if(flag2 == 0){
-                                    if (strlen(new_tag) >= strlen(tags)){
+                                if (flag2 == 0) {
+                                    if (strlen(new_tag) >= strlen(tags)) {
                                         fprintf(file2, "%s\n", new_tag);
                                         fprintf(file2, "%s\n", tags);
-                                    }
-                                    else{
+                                    } else {
                                         fprintf(file2, "%s\n", tags);
                                         fprintf(file2, "%s\n", new_tag);
                                     }
@@ -3367,12 +3611,11 @@ int run_tag(int argc, char *const argv[]) {
                                         break;
                                     }
                                 }
-                                if(flag2 == 0){
-                                    if (strlen(new_tag) >= strlen(tags)){
+                                if (flag2 == 0) {
+                                    if (strlen(new_tag) >= strlen(tags)) {
                                         fprintf(file2, "%s\n", new_tag);
                                         fprintf(file2, "%s\n", tags);
-                                    }
-                                    else{
+                                    } else {
                                         fprintf(file2, "%s\n", tags);
                                         fprintf(file2, "%s\n", new_tag);
                                     }
@@ -3521,12 +3764,11 @@ int run_tag(int argc, char *const argv[]) {
                                             break;
                                         }
                                     }
-                                    if(flag2 == 0){
-                                        if (strlen(new_tag) >= strlen(tags)){
+                                    if (flag2 == 0) {
+                                        if (strlen(new_tag) >= strlen(tags)) {
                                             fprintf(file2, "%s\n", new_tag);
                                             fprintf(file2, "%s\n", tags);
-                                        }
-                                        else{
+                                        } else {
                                             fprintf(file2, "%s\n", tags);
                                             fprintf(file2, "%s\n", new_tag);
                                         }
@@ -3590,7 +3832,7 @@ int run_tag(int argc, char *const argv[]) {
                                 fprintf(file2, "%s ", user_name);
                                 fprintf(file2, "%s ", email);
                                 fprintf(file2, "%s ", cur_time);
-                                fprintf(file2, "%s\n" , message);
+                                fprintf(file2, "%s\n", message);
                             } else {
                                 fprintf(file2, "%s\n", tag_content);
                             }
@@ -3686,12 +3928,11 @@ int run_tag(int argc, char *const argv[]) {
                                             break;
                                         }
                                     }
-                                    if(flag2 == 0){
-                                        if (strlen(new_tag) >= strlen(tags)){
+                                    if (flag2 == 0) {
+                                        if (strlen(new_tag) >= strlen(tags)) {
                                             fprintf(file2, "%s\n", new_tag);
                                             fprintf(file2, "%s\n", tags);
-                                        }
-                                        else{
+                                        } else {
                                             fprintf(file2, "%s\n", tags);
                                             fprintf(file2, "%s\n", new_tag);
                                         }
@@ -3862,12 +4103,11 @@ int run_tag(int argc, char *const argv[]) {
                                     break;
                                 }
                             }
-                            if(flag2 == 0){
-                                if (strlen(new_tag) >= strlen(tags)){
+                            if (flag2 == 0) {
+                                if (strlen(new_tag) >= strlen(tags)) {
                                     fprintf(file2, "%s\n", new_tag);
                                     fprintf(file2, "%s\n", tags);
-                                }
-                                else{
+                                } else {
                                     fprintf(file2, "%s\n", tags);
                                     fprintf(file2, "%s\n", new_tag);
                                 }
@@ -4004,12 +4244,11 @@ int run_tag(int argc, char *const argv[]) {
                                         break;
                                     }
                                 }
-                                if(flag2 == 0){
-                                    if (strlen(new_tag) >= strlen(tags)){
+                                if (flag2 == 0) {
+                                    if (strlen(new_tag) >= strlen(tags)) {
                                         fprintf(file2, "%s\n", new_tag);
                                         fprintf(file2, "%s\n", tags);
-                                    }
-                                    else{
+                                    } else {
                                         fprintf(file2, "%s\n", tags);
                                         fprintf(file2, "%s\n", new_tag);
                                     }
@@ -4073,7 +4312,7 @@ int run_tag(int argc, char *const argv[]) {
                             fprintf(file2, "%s ", user_name);
                             fprintf(file2, "%s ", email);
                             fprintf(file2, "%s ", cur_time);
-                            fprintf(file2, "%s\n" , message);
+                            fprintf(file2, "%s\n", message);
                         } else {
                             fprintf(file2, "%s\n", tag_content);
                         }
