@@ -4369,8 +4369,18 @@ int run_grep(int argc, char *const argv[]) {
             while (fgets(file_content, 10000, file) != NULL) {
                 if (file_content[strlen(file_content) - 1] == '\n')
                     file_content[strlen(file_content) - 1] = '\0';
-                if (strstr(file_content, word) != NULL) {
-                    printf("%s\n", file_content);
+                char * wow = strstr(file_content, word);
+                if (wow != NULL) {
+                        char end[1000] = "";
+                        char begin[1000] = "";
+                        char word2[1000] = "";
+                    strcpy(end , wow + strlen(word));
+
+                    strncpy(word2 , wow , strlen(word));
+
+                    strncpy(begin , file_content , wow - file_content);
+                    printf(BLU"%s"RED "%s"BLU"%s\n"Reset, begin , word2 , end);
+                    //printf("%s %s %s\n", begin , word2 , end);
                 }
             }
             fclose(file);
@@ -4403,9 +4413,19 @@ int run_grep(int argc, char *const argv[]) {
                     if (file_content[strlen(file_content) - 1] == '\n')
                         file_content[strlen(file_content) - 1] = '\0';
                     counter++;
-                    if (strstr(file_content, word) != NULL) {
-                        printf("%s\n", file_content);
+                    char * wow = strstr(file_content, word);
+                    if (wow != NULL) {
+                        char end[1000] = "";
+                        char begin[1000] = "";
+                        char word2[1000] = "";
+                        strcpy(end , wow + strlen(word));
+
+                        strncpy(word2 , wow , strlen(word));
+
+                        strncpy(begin , file_content , wow - file_content);
+                        printf(BLU"%s"RED "%s"BLU"%s\n"Reset, begin , word2 , end);
                         printf("line num = %d\n", counter);
+                        //printf("%s %s %s\n", begin , word2 , end);
                     }
                 }
                 fclose(file);
@@ -4464,12 +4484,18 @@ int run_grep(int argc, char *const argv[]) {
             file = fopen(address, "r");
             char *file_content = (char *) malloc(10000 * sizeof(char));
             while (fgets(file_content, 10000, file) != NULL) {
-                if (file_content[strlen(file_content) - 1] == '\n')
-                    file_content[strlen(file_content) - 1] = '\0';
-                //counter++;
-                if (strstr(file_content, word) != NULL) {
-                    printf("%s\n", file_content);
-                    //printf("line num = %d\n" , counter);
+                char * wow = strstr(file_content, word);
+                if (wow != NULL) {
+                    char end[1000] = "";
+                    char begin[1000] = "";
+                    char word2[1000] = "";
+                    strcpy(end , wow + strlen(word));
+
+                    strncpy(word2 , wow , strlen(word));
+
+                    strncpy(begin , file_content , wow - file_content);
+                    printf(BLU"%s"RED "%s"BLU"%s\n"Reset, begin , word2 , end);
+                    //printf("%s %s %s\n", begin , word2 , end);
                 }
             }
             fclose(file);
@@ -4524,9 +4550,19 @@ int run_grep(int argc, char *const argv[]) {
                 if (file_content[strlen(file_content) - 1] == '\n')
                     file_content[strlen(file_content) - 1] = '\0';
                 counter++;
-                if (strstr(file_content, word) != NULL) {
-                    printf("%s\n", file_content);
+                char * wow = strstr(file_content, word);
+                if (wow != NULL) {
+                    char end[1000] = "";
+                    char begin[1000] = "";
+                    char word2[1000] = "";
+                    strcpy(end , wow + strlen(word));
+
+                    strncpy(word2 , wow , strlen(word));
+
+                    strncpy(begin , file_content , wow - file_content);
+                    printf(BLU"%s"RED "%s"BLU"%s\n"Reset, begin , word2 , end);
                     printf("line num = %d\n", counter);
+                    //printf("%s %s %s\n", begin , word2 , end);
                 }
             }
             fclose(file);
